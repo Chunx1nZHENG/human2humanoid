@@ -6,20 +6,22 @@ from easydict import EasyDict
 import scipy.ndimage.filters as filters
 import smpl_sim.poselib.core.rotation3d as pRot
 
-H1_ROTATION_AXIS = torch.tensor([[
+H1_2_ROTATION_AXIS = torch.tensor([[
     [0, 0, 1], # l_hip_yaw
-    [1, 0, 0], # l_hip_roll
-    [0, 1, 0], # l_hip_pitch
+    [0, 1, 0], # l_hip_roll
+    [1, 0, 0], # l_hip_pitch
     
     [0, 1, 0], # kneel
-    [0, 1, 0], # ankle
+    [0, 1, 0], # ankle_pitch
+    [1, 0, 0], # ankle_roll
     
     [0, 0, 1], # r_hip_yaw
-    [1, 0, 0], # r_hip_roll
-    [0, 1, 0], # r_hip_pitch
+    [0, 1, 0], # r_hip_roll
+    [1, 0, 0], # r_hip_pitch
     
     [0, 1, 0], # kneel
-    [0, 1, 0], # ankle
+    [0, 1, 0], # ankle_pitch
+    [1, 0, 0], # ankle_roll
     
     [0, 0, 1], # torso
     
@@ -27,27 +29,34 @@ H1_ROTATION_AXIS = torch.tensor([[
     [1, 0, 0], # l_roll_pitch
     [0, 0, 1], # l_yaw_pitch
     
-    [0, 1, 0], # l_elbow
+    [0, 1, 0], # l_elbow_pitch
+    [1, 0, 0], # l_elbow_roll
+    [0, 0, 1], # l_wrist_pitch
+    [0, 0, 1], # l_wrist_yaw
+
     
     [0, 1, 0], # r_shoulder_pitch
     [1, 0, 0], # r_roll_pitch
     [0, 0, 1], # r_yaw_pitch
     
-    [0, 1, 0], # r_elbow
+    [0, 1, 0], # r_elbow_pitch
+    [1, 0, 0], # r_elbow_roll
+    [0, 0, 1], # r_wrist_pitch
+    [0, 0, 1], # r_wrist_yaw
 ]])
 
 
 class Humanoid_Batch:
 
-    def __init__(self, mjcf_file = f"resources/robots/h1/h1.xml", extend_hand = True, extend_head = False, device = torch.device("cpu")):
+    def __init__(self, mjcf_file = f"resources/robots/h1_2/h1_2.xml", extend_hand = True, extend_head = False, device = torch.device("cpu")):
         self.mjcf_data = mjcf_data = self.from_mjcf(mjcf_file)
         self.extend_hand = extend_hand
         self.extend_head = extend_head
         if extend_hand:
             self.model_names = mjcf_data['node_names'] + ["left_hand_link", "right_hand_link"]
-            self._parents = torch.cat((mjcf_data['parent_indices'], torch.tensor([15, 19]))).to(device) # Adding the hands joints
-            print(self._parents)
-            arm_length = 0.3
+            self._parents = torch.cat((mjcf_data['parent_indices'], torch.tensor([20, 27]))).to(device) # Adding the hands joints
+            print(mjcf_data['node_names'])
+            arm_length = 0.05
             self._offsets = torch.cat((mjcf_data['local_translation'], torch.tensor([[arm_length, 0, 0], [arm_length, 0, 0]])), dim = 0)[None, ].to(device)
             self._local_rotation = torch.cat((mjcf_data['local_rotation'], torch.tensor([[1, 0, 0, 0], [1, 0, 0, 0]])), dim = 0)[None, ].to(device)
             self._remove_idx = 2
@@ -61,6 +70,7 @@ class Humanoid_Batch:
             self._remove_idx = 3
             self.model_names = self.model_names + ["head_link"]
             self._parents = torch.cat((self._parents, torch.tensor([0]).to(device))).to(device) # Adding the hands joints
+            print(self._parents)
             head_length = 0.75
             self._offsets = torch.cat((self._offsets, torch.tensor([[[0, 0, head_length]]]).to(device)), dim = 1).to(device)
             self._local_rotation = torch.cat((self._local_rotation, torch.tensor([[[1, 0, 0, 0]]]).to(device)), dim = 1).to(device)
@@ -68,6 +78,7 @@ class Humanoid_Batch:
         
         self.joints_range = mjcf_data['joints_range'].to(device)
         self._local_rotation_mat = tRot.quaternion_to_matrix(self._local_rotation).float() # w, x, y ,z
+        print(self._parents)
         
     def from_mjcf(self, path):
         # function from Poselib: 
@@ -204,6 +215,7 @@ class Humanoid_Batch:
                 positions_world.append(root_positions)
                 rotations_world.append(root_rotations)
             else:
+                # import ipdb; ipdb.set_trace()
                 jpos = (torch.matmul(rotations_world[self._parents[i]][:, :, 0], expanded_offsets[:, :, i, :, None]).squeeze(-1) + positions_world[self._parents[i]])
                 rot_mat = torch.matmul(rotations_world[self._parents[i]], torch.matmul(self._local_rotation_mat[:,  (i):(i + 1)], rotations[:, :, (i - 1):i, :]))
                 # rot_mat = torch.matmul(rotations_world[self._parents[i]], rotations[:, :, (i - 1):i, :])

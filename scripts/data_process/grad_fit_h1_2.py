@@ -17,7 +17,7 @@ from phc.smpllib.smpl_parser import (
 )
 import joblib
 from phc.utils.rotation_conversions import axis_angle_to_matrix
-from phc.utils.torch_h1_humanoid_batch import Humanoid_Batch
+from phc.utils.torch_h1_2_humanoid_batch import Humanoid_Batch
 from torch.autograd import Variable
 from tqdm import tqdm
 import argparse
@@ -40,6 +40,7 @@ def load_amass_data(data_path):
     )
     betas = entry_data["betas"]
     gender = entry_data["gender"]
+    
     return {
         "pose_aa": pose_aa,
         "gender": gender,
@@ -56,20 +57,22 @@ if __name__ == "__main__":
     
     device = torch.device("cuda")
 
-    h1_rotation_axis = torch.tensor([[
+    h1_2_rotation_axis = torch.tensor([[
         [0, 0, 1], # l_hip_yaw
+        [0, 1, 0], # l_hip_pirch
         [1, 0, 0], # l_hip_roll
-        [0, 1, 0], # l_hip_pitch
         
         [0, 1, 0], # kneel
-        [0, 1, 0], # ankle
+        [0, 1, 0], # ankle_pitch
+        [1, 0, 0], # ankle_roll
         
         [0, 0, 1], # r_hip_yaw
-        [1, 0, 0], # r_hip_roll
         [0, 1, 0], # r_hip_pitch
+        [1, 0, 0], # r_hip_rpp
         
         [0, 1, 0], # kneel
-        [0, 1, 0], # ankle
+        [0, 1, 0], # ankle_pitch
+        [1, 0, 0], # ankle_roll
         
         [0, 0, 1], # torso
         
@@ -77,23 +80,34 @@ if __name__ == "__main__":
         [1, 0, 0], # l_roll_pitch
         [0, 0, 1], # l_yaw_pitch
         
-        [0, 1, 0], # l_elbow
+        [0, 1, 0], # l_elbow_pitch
+        [1, 0, 0], # l_elbow_roll
+        [0, 0, 1], # l_wrist_pitch
+        [0, 0, 1], # l_wrist_yaw
+
         
         [0, 1, 0], # r_shoulder_pitch
         [1, 0, 0], # r_roll_pitch
         [0, 0, 1], # r_yaw_pitch
         
-        [0, 1, 0], # r_elbow
+        [0, 1, 0], # r_elbow_pitch
+        [1, 0, 0], # r_elbow_roll
+        [0, 0, 1], # r_wrist_pitch
+        [0, 0, 1], # r_wrist_yaw
     ]]).to(device)
-
     h1_joint_names = [ 'pelvis', 
-                    'left_hip_yaw_link', 'left_hip_roll_link','left_hip_pitch_link', 'left_knee_link', 'left_ankle_link',
-                    'right_hip_yaw_link', 'right_hip_roll_link', 'right_hip_pitch_link', 'right_knee_link', 'right_ankle_link',
-                    'torso_link', 'left_shoulder_pitch_link', 'left_shoulder_roll_link', 'left_shoulder_yaw_link', 'left_elbow_link', 
-                    'right_shoulder_pitch_link', 'right_shoulder_roll_link', 'right_shoulder_yaw_link', 'right_elbow_link']
+                    'left_hip_yaw_link', 'left_hip_pitch_link','left_hip_roll_link', 'left_knee_link', 'left_ankle_pitch_link','left_ankle_roll_link',
+                    'right_hip_yaw_link', 'right_hip_pitch_link', 'right_hip_roll_link', 'right_knee_link', 'right_ankle_pitch_link','right_ankle_roll_link',
+                    'torso_link', 'left_shoulder_pitch_link', 'left_shoulder_roll_link', 'left_shoulder_yaw_link', 'left_elbow_pitch_link', 'left_elbow_roll_link','left_wrist_pitch_link','left_wrist_yaw_link',
+                    'right_shoulder_pitch_link', 'right_shoulder_roll_link', 'right_shoulder_yaw_link', 'right_elbow_pitch_link', 'right_elbow_roll_link','right_wrist_pitch_link','right_wrist_yaw_link',]
 
     h1_joint_names_augment = h1_joint_names + ["left_hand_link", "right_hand_link"]
-    h1_joint_pick = ['pelvis', "left_knee_link", "left_ankle_link",  'right_knee_link', 'right_ankle_link', "left_shoulder_roll_link", "left_elbow_link", "left_hand_link", "right_shoulder_roll_link", "right_elbow_link", "right_hand_link",]
+    h1_joint_pick = ['pelvis',  
+                 "left_knee_link", "left_ankle_roll_link",  
+                 'right_knee_link', 'right_ankle_roll_link',
+                 "left_shoulder_roll_link", "left_elbow_pitch_link", "left_hand_link", 
+                 'right_shoulder_roll_link', 'right_elbow_pitch_link', 'right_hand_link']
+    # h1_joint_pick = ['pelvis', "left_knee_link", "left_ankle_link",  'right_knee_link', 'right_ankle_link', "left_shoulder_roll_link", "left_elbow_link", "left_hand_link", "right_shoulder_roll_link", "right_elbow_link", "right_hand_link",]
     smpl_joint_pick = ["Pelvis",  "L_Knee", "L_Ankle",  "R_Knee", "R_Ankle", "L_Shoulder", "L_Elbow", "L_Hand", "R_Shoulder", "R_Elbow", "R_Hand"]
     h1_joint_pick_idx = [ h1_joint_names_augment.index(j) for j in h1_joint_pick]
     smpl_joint_pick_idx = [SMPL_BONE_ORDER_NAMES.index(j) for j in smpl_joint_pick]
@@ -119,6 +133,8 @@ if __name__ == "__main__":
     pbar = tqdm(key_name_to_pkls.keys())
     for data_key in pbar:
         amass_data = load_amass_data(key_name_to_pkls[data_key])
+        if amass_data['pose_aa'].shape[0] < 2:
+            continue
         skip = int(amass_data['fps']//30)
         trans = torch.from_numpy(amass_data['trans'][::skip]).float().to(device)
         N = trans.shape[0]
@@ -134,16 +150,17 @@ if __name__ == "__main__":
         pose_aa_h1 = torch.from_numpy(pose_aa_h1).float().to(device)
         gt_root_rot = torch.from_numpy((sRot.from_rotvec(pose_aa_walk.cpu().numpy()[:, :3]) * sRot.from_quat([0.5, 0.5, 0.5, 0.5]).inv()).as_rotvec()).float().to(device)
 
-        dof_pos = torch.zeros((1, N, 19, 1)).to(device)
+        dof_pos = torch.zeros((1, N, 27, 1)).to(device)
 
         dof_pos_new = Variable(dof_pos, requires_grad=True)
         optimizer_pose = torch.optim.Adadelta([dof_pos_new],lr=100)
 
         for iteration in range(500):
             verts, joints = smpl_parser_n.get_joints_verts(pose_aa_walk, shape_new, trans)
-            pose_aa_h1_new = torch.cat([gt_root_rot[None, :, None], h1_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2).to(device)
+            pose_aa_h1_new = torch.cat([gt_root_rot[None, :, None], h1_2_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2).to(device)
+            # import ipdb; ipdb.set_trace()
             fk_return = h1_fk.fk_batch(pose_aa_h1_new, root_trans_offset[None, ])
-            
+            # import ipdb; ipdb.set_trace()
             diff = fk_return['global_translation_extend'][:, :, h1_joint_pick_idx] - joints[:, smpl_joint_pick_idx]
             loss_g = diff.norm(dim = -1).mean() 
             loss = loss_g
@@ -158,13 +175,13 @@ if __name__ == "__main__":
             dof_pos_new.data.clamp_(h1_fk.joints_range[:, 0, None], h1_fk.joints_range[:, 1, None])
             
         dof_pos_new.data.clamp_(h1_fk.joints_range[:, 0, None], h1_fk.joints_range[:, 1, None])
-        pose_aa_h1_new = torch.cat([gt_root_rot[None, :, None], h1_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2)
+        pose_aa_h1_new = torch.cat([gt_root_rot[None, :, None], h1_2_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2)
         fk_return = h1_fk.fk_batch(pose_aa_h1_new, root_trans_offset[None, ])
 
         root_trans_offset_dump = root_trans_offset.clone()
 
         root_trans_offset_dump[..., 2] -= fk_return.global_translation[..., 2].min().item() - 0.08
-        
+        root_trans_offset_dump[..., 2] -= 0.08
         data_dump[data_key]={
                 "root_trans_offset": root_trans_offset_dump.squeeze().cpu().detach().numpy(),
                 "pose_aa": pose_aa_h1_new.squeeze().cpu().detach().numpy(),   
@@ -173,10 +190,10 @@ if __name__ == "__main__":
                 "fps": 30
                 }
         
-        print(f"dumping {data_key} for testing, remove the line if you want to process all data")
-        import ipdb; ipdb.set_trace()
-        joblib.dump(data_dump, "data/h1/test.pkl")
+        # print(f"dumping {data_key} for testing, remove the line if you want to process all data")
+        # import ipdb; ipdb.set_trace()
+        # joblib.dump(data_dump, "data/h1_2/test.pkl")
     
         
     import ipdb; ipdb.set_trace()
-    joblib.dump(data_dump, "data/h1/amass_all.pkl")
+    joblib.dump(data_dump, "data/h1_2/amass_train.pkl")
