@@ -55,7 +55,7 @@ class Humanoid_Batch:
         if extend_hand:
             self.model_names = mjcf_data['node_names'] + ["left_hand_link", "right_hand_link"]
             self._parents = torch.cat((mjcf_data['parent_indices'], torch.tensor([20, 27]))).to(device) # Adding the hands joints
-            print(mjcf_data['node_names'])
+            
             arm_length = 0.05
             self._offsets = torch.cat((mjcf_data['local_translation'], torch.tensor([[arm_length, 0, 0], [arm_length, 0, 0]])), dim = 0)[None, ].to(device)
             self._local_rotation = torch.cat((mjcf_data['local_rotation'], torch.tensor([[1, 0, 0, 0], [1, 0, 0, 0]])), dim = 0)[None, ].to(device)
@@ -78,6 +78,8 @@ class Humanoid_Batch:
         
         self.joints_range = mjcf_data['joints_range'].to(device)
         self._local_rotation_mat = tRot.quaternion_to_matrix(self._local_rotation).float() # w, x, y ,z
+        print("in hb!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   ")
+        print(mjcf_data['node_names'])
         print(self._parents)
         
     def from_mjcf(self, path):
