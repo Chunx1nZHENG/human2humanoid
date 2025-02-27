@@ -9,7 +9,7 @@ vertical_scale : 0.005 # [m]
 border_size : 25 # [m]
 curriculum : False
 # curriculum : False
-static_friction : 1.0
+static_friction : 1.5
 dynamic_friction : 1.0
 restitution : 0.
 # rough terrain only:

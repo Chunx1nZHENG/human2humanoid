@@ -246,7 +246,8 @@ class MotionLibH1_2(MotionLibBase):
 
         manager = mp.Manager()
         queue = manager.Queue()
-        num_jobs = min(mp.cpu_count(), 64)
+        num_jobs = max(mp.cpu_count(), 1)
+        # print ("num_jobs", num_jobs)
 
         if num_jobs <= 8 or not self.multi_thread:
             num_jobs = 1

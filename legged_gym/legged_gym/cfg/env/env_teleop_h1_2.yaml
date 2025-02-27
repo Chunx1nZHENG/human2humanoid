@@ -31,7 +31,7 @@ num_privileged_obs : 215 #214 # v-teleop-extend-max
 # num_privileged_obs : 211 # v-teleop-extend-max-nolinvel
 
 num_actions : 27
-im_eval : False
+im_eval : True
 
 add_short_history: False
 short_history_length: 5

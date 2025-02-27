@@ -30,11 +30,11 @@ def load_amass_data(data_path):
 
     root_trans = entry_data["trans"]
     root_trans = root_trans.reshape(-1, 3)
-    print(root_trans.shape)
+    # print(root_trans.shape)
     # the shape of entry_data["poses"] is (1,N,72)
     # change it into (N,72)
     pose_temp = entry_data["poses"].reshape(-1, 72)
-    print(pose_temp.shape)
+    # print(pose_temp.shape)
     pose_aa = np.concatenate(
         [pose_temp[:, :66], np.zeros((root_trans.shape[0], 6))], axis=-1
     )

@@ -52,7 +52,7 @@ asset_descriptors = [
 ]
 sk_tree = SkeletonTree.from_mjcf(h1_xml)
 
-motion_file = "data/h1/test.pkl"
+motion_file = "resources/motions/h1/stable_punch.pkl"
 if os.path.exists(motion_file):
     print(f"loading {motion_file}")
 else:
@@ -237,9 +237,9 @@ while not gym.query_viewer_has_closed(viewer):
         
     gym.clear_lines(viewer)
     gym.refresh_rigid_body_state_tensor(sim)
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     idx = 0
-    for pos_joint in rb_pos[0, 1:]: # idx 0 torso (duplicate with 11)
+    for pos_joint in rb_pos[0, :]: # idx 0 torso (duplicate with 11)
         sphere_geom2 = gymutil.WireframeSphereGeometry(0.1, 4, 4, None, color=(1, 0.0, 0.0))
         sphere_pose = gymapi.Transform(gymapi.Vec3(pos_joint[0], pos_joint[1], pos_joint[2]), r=None)
         gymutil.draw_lines(sphere_geom2, gym, viewer, envs[0], sphere_pose) 

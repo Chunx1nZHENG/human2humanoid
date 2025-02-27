@@ -9,7 +9,7 @@ scales:
   upper_action_rate : -0.625 # 0.0625 # -0.6  # -0.3 # -0.3 -0.12 -0.01
   dof_pos_limits : -100.0*1.25
   dof_vel_limits : -50.
-  termination : -200*1.25
+  termination : -600*1.25
   feet_contact_forces : -0.75 # 0.125
   stumble : -1000.0*1.25
   feet_air_time_teleop : 1000

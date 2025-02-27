@@ -234,12 +234,13 @@ while not gym.query_viewer_has_closed(viewer):
                 motion_res["motion_bodies"], motion_res["motion_limb_weights"], motion_res["motion_aa"], motion_res["rg_pos"], motion_res["rb_rot"], motion_res["body_vel"], motion_res["body_ang_vel"]
     if args.show_axis:
         gym.clear_lines(viewer)
-        
+    # import ipdb; ipdb.set_trace()
     gym.clear_lines(viewer)
     gym.refresh_rigid_body_state_tensor(sim)
     # import pdb; pdb.set_trace()
     idx = 0
-    for pos_joint in rb_pos[0, 1:]: # idx 0 torso (duplicate with 11)
+
+    for pos_joint in rb_pos[0, :]: # idx 0 torso (duplicate with 11)
         sphere_geom2 = gymutil.WireframeSphereGeometry(0.1, 4, 4, None, color=(1, 0.0, 0.0))
         sphere_pose = gymapi.Transform(gymapi.Vec3(pos_joint[0], pos_joint[1], pos_joint[2]), r=None)
         gymutil.draw_lines(sphere_geom2, gym, viewer, envs[0], sphere_pose) 
