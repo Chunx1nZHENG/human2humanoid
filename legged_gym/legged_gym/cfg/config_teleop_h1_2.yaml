@@ -30,7 +30,7 @@ metadata: false
 play: ${test}
 train: True
 im_dump: False
-task: "h1_2:teleop"
+task: "h1_2:teleop_G"
 load_run: ""
 num_envs: 4096
 checkpoint: 0

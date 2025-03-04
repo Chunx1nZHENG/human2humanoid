@@ -14,7 +14,7 @@ density : 0.001
 angular_damping : 0.
 linear_damping : 0.
 set_dof_properties : True
-default_dof_prop_damping : [5,5,5,6,2,2, 5,5,5,6,2,2, 6, 2,2,2,2,1,1,1, 2,2,2,2,1,1,1]
+default_dof_prop_damping : [2,2,2,2,2,2, 2,2,2,2,2,2, 3, 2,2,2,2,1,1,1, 2,2,2,2,1,1,1]
 # default_dof_prop_stiffness : [200,200,200,300,40, 200,200,200,300,40, 300, 100,100,100,100, 100,100,100,100]
 default_dof_prop_stiffness : [0,0,0,0,0,0, 0,0,0,0,0,0, 0, 0,0,0,0,0,0,0, 0,0,0,0,0,0,0]
 default_dof_prop_friction : [0,0,0,0,0,0, 0,0,0,0,0,0, 0, 0,0,0,0,0,0,0, 0,0,0,0,0,0,0]

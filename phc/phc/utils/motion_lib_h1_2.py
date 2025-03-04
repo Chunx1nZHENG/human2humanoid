@@ -179,7 +179,7 @@ if not USE_CACHE:
 
 class MotionLibH1_2(MotionLibBase):
 
-    def __init__(self, motion_file, device, fix_height=FixHeightMode.no_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True, extend_hand = True, extend_head = False, mjcf_file="resources/robots/h1_2/h1_2.xml", sim_timestep = 1/50):
+    def __init__(self, motion_file, device, fix_height=FixHeightMode.no_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True, extend_hand = True, extend_head = True, mjcf_file="resources/robots/h1_2/h1_2.xml", sim_timestep = 1/50):
         super().__init__(motion_file=motion_file, device=device, fix_height=fix_height, masterfoot_conifg=masterfoot_conifg, min_length=min_length, im_eval=im_eval, multi_thread=multi_thread, sim_timestep = sim_timestep)
         self.mesh_parsers = Humanoid_Batch(extend_hand = extend_hand, extend_head = extend_head, mjcf_file=mjcf_file)
         return
@@ -493,6 +493,12 @@ class MotionLibH1_2(MotionLibBase):
 
             trans = to_torch(curr_file['root_trans_offset']).clone()[start:end]
             pose_aa = to_torch(curr_file['pose_aa'][start:end]).clone()
+
+            # remove first 10 frames
+            if pose_aa.shape[0] >= 20:
+                trans = trans[10:]
+                pose_aa = pose_aa[10:] 
+
             dt = 1/curr_file['fps']
 
             B, J, N = pose_aa.shape

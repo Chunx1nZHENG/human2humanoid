@@ -675,6 +675,7 @@ class LeggedRobot(BaseTask):
                 diff =  ref_body_pos_extend[:, [0]] - self._rigid_body_pos[:, [0]]
                 ref_body_pos_extend[:, 13:] -= diff
             
+            print (ref_body_pos_extend.shape)
             self.marker_coords[:] = ref_body_pos_extend.reshape(B, -1, 3)
             
         if self.cfg.motion.teleop:
@@ -2231,11 +2232,11 @@ class LeggedRobot(BaseTask):
             motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
             
             # print the shape of motion_res and dof_pos
-            # print(motion_res['dof_pos'].shape, motion_res['dof_pos'].shape)
+            # print(self.dof_pos[env_ids].shape, motion_res['dof_pos'].shape)
             self.dof_pos[env_ids] = motion_res['dof_pos'][env_ids]
-            # self.dof_vel[env_ids] = motion_res['dof_vel'][env_ids]
+            self.dof_vel[env_ids] = motion_res['dof_vel'][env_ids]
             # self.dof_pos[env_ids] = torch.zeros_like(self.dof_pos[env_ids])
-            self.dof_vel[env_ids] = torch.zeros_like(self.dof_vel[env_ids])
+            # self.dof_vel[env_ids] = torch.zeros_like(self.dof_vel[env_ids])
             # self.dof_pos[env_ids,13:] = motion_res['dof_pos'][env_ids,13:]
             
         else:
@@ -2282,7 +2283,7 @@ class LeggedRobot(BaseTask):
                 # print("root",motion_res['root_pos'][env_ids])
                 # self.root_states[env_ids, 2] += 0.03 # in case under the terrain
                 # torch.where(self.root_states[env_ids, 2] < 1.02, 1.05, self.root_states[env_ids, 2])
-                self.root_states[env_ids, 2] += 0.18# in case under the terrain
+                self.root_states[env_ids, 2] += 0.07# in case under the terrain
 
                 # self.root_states[env_ids, 0] += 5.0 # in case under the terrain
                 # self.root_states[env_ids, 1] += 5.0 # in case under the terrain
@@ -2299,7 +2300,7 @@ class LeggedRobot(BaseTask):
                 self.root_states[env_ids, 3:7] = motion_res['root_rot'][env_ids]
                 self.root_states[env_ids, 7:10] = motion_res['root_vel'][env_ids] # ZL: use random velicty initation should be more robust? 
                 self.root_states[env_ids, 10:13] = motion_res['root_ang_vel'][env_ids]
-                self.root_states[env_ids, 7:13] *= 0
+                # self.root_states[env_ids, 7:13] *= 0
                 # self.root_states[env_ids, 3:7] = torch.tensor([-0.0998334, 0, 0, 0.9950042], device=self.device).repeat(len(env_ids), 1)
                 # self.root_states[env_ids, 7:10] = torch.tensor([0., 0., 0.], device=self.device).repeat(len(env_ids), 1)
                 # self.root_states[env_ids, 10:13] = torch.tensor([0., 0., 0.], device=self.device).repeat(len(env_ids), 1)
@@ -3060,7 +3061,7 @@ class LeggedRobot(BaseTask):
 
         # joint positions offsets and PD gains
         self.default_dof_pos = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
-        print(self.num_dofs)
+        # print(self.num_dofs)
         for i in range(self.num_dofs):
             name = self.dof_names[i]
             angle = self.cfg.init_state.default_joint_angles[name]
@@ -3984,10 +3985,12 @@ class LeggedRobot(BaseTask):
         
 
         extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
+        # print(self.extend_body_parent_ids)
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
         
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
-        diff_global_body_pos_vr_3keypoints = diff_global_body_pos[:, -3:]
+        # print(ref_body_pos_extend[:, -3:], body_pos_extend[:, -3:])
+        diff_global_body_pos_vr_3keypoints = diff_global_body_pos[:, :]
         diff_body_pos_dist_vr_3keypoints = (diff_global_body_pos_vr_3keypoints**2).mean(dim=-1).mean(dim=-1)
 
         diff_body_pos_dist_vr_3keypoints= diff_body_pos_dist_vr_3keypoints

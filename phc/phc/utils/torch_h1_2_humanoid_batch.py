@@ -48,7 +48,7 @@ H1_2_ROTATION_AXIS = torch.tensor([[
 
 class Humanoid_Batch:
 
-    def __init__(self, mjcf_file = f"resources/robots/h1_2/h1_2.xml", extend_hand = True, extend_head = False, device = torch.device("cpu")):
+    def __init__(self, mjcf_file = f"resources/robots/h1_2/h1_2.xml", extend_hand = True, extend_head = True, device = torch.device("cpu")):
         self.mjcf_data = mjcf_data = self.from_mjcf(mjcf_file)
         self.extend_hand = extend_hand
         self.extend_head = extend_head

@@ -4,9 +4,10 @@ import torch
 import math
 import genesis as gs
 from genesis.utils.geom import quat_to_xyz, transform_by_quat, inv_quat, transform_quat_by_quat
-from legged_gym.utils.math import quat_apply_yaw, wrap_to_pi, torch_rand_sqrt_float, quat_apply
+# from legged_gym.utils.math import quat_apply_yaw, wrap_to_pi, torch_rand_sqrt_float, quat_apply
 from phc.utils.motion_lib_h1_2 import MotionLibH1_2
 from smpl_sim.poselib.skeleton.skeleton3d import SkeletonTree
+import os
 
 def gs_rand_float(lower, upper, shape, device):
     return (upper - lower) * torch.rand(size=shape, device=device) + lower
@@ -632,94 +633,7 @@ class H1_2_Env:
         self.gym.set_actor_root_state_tensor_indexed(self.sim,
                                                      gymtorch.unwrap_tensor(self.root_states),
                                                      gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
-        
-    #-------------- Reference Motion ---------------
-    def _load_motion(self):
-        motion_path = self.cfg.motion.motion_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
-        skeleton_path = self.cfg.motion.skeleton_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
-        self._motion_lib = MotionLibH1_2(motion_file=motion_path, device=self.device, masterfoot_conifg=None, fix_height=False,multi_thread=False,mjcf_file=skeleton_path, extend_head=self.cfg.motion.extend_head) #multi_thread=True doesn't work
-        sk_tree = SkeletonTree.from_mjcf(skeleton_path)
-        
-        self.skeleton_trees = [sk_tree] * self.num_envs
-        if self.cfg.env.test:
-            self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=[torch.zeros(25)] * self.num_envs, limb_weights=[np.zeros(10)] * self.num_envs, random_sample=False)
-        else:
-            self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=[torch.zeros(25)] * self.num_envs, limb_weights=[np.zeros(10)] * self.num_envs, random_sample=True)
-        self.motion_dt = self._motion_lib._motion_dt
 
-    def resample_motion(self):
-        self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=[torch.zeros(25)] * self.num_envs, limb_weights=[np.zeros(10)] * self.num_envs, random_sample=True)
-        env_ids = torch.arange(self.num_envs).to(self.device)
-        self.reset_idx(env_ids)
-    def _resample_motion_times(self, env_ids):
-        if len(env_ids) == 0:
-            return
-        # self.motion_ids[env_ids] = self._motion_lib.sample_motions(len(env_ids))
-        # self.motion_ids[env_ids] = torch.randint(0, self._motion_lib._num_unique_motions, (len(env_ids),), device=self.device)
-        # print(self.motion_ids[:10])
-        self.motion_len[env_ids] = self._motion_lib.get_motion_length(self.motion_ids[env_ids])
-        # self.env_origins_init_3Doffset[env_ids, :2] = torch_rand_float(-1., 1., (len(env_ids), 2), device=self.device) # xy position within 1m of the center
-        if self.cfg.env.test:
-            self.motion_start_times[env_ids] = 0
-        else:
-            self.motion_start_times[env_ids] = self._motion_lib.sample_time(self.motion_ids[env_ids])
-        # self.motion_start_times[env_ids] = self._motion_lib.sample_time(self.motion_ids[env_ids])
-        offset=(self.env_origins + self.env_origins_init_3Doffset)
-        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
-        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset= offset)
-        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
-        
-        self.ref_base_pos_init[env_ids] = motion_res["root_pos"][env_ids]
-        self.ref_base_rot_init[env_ids] = motion_res["root_rot"][env_ids]
-        self.ref_base_vel_init[env_ids] = motion_res["root_vel"][env_ids]
-        self.ref_base_ang_vel_init[env_ids] = motion_res["root_ang_vel"][env_ids]
-
-        
-    def _get_state_from_motionlib_cache(self, motion_ids, motion_times, offset=None):
-        ## Cache the motion + offset
-        # import ipdb; ipdb.set_trace()
-        if offset is None  or not "motion_ids" in self.ref_motion_cache or self.ref_motion_cache['offset'] is None or len(self.ref_motion_cache['motion_ids']) != len(motion_ids) or len(self.ref_motion_cache['offset']) != len(offset) \
-            or  (self.ref_motion_cache['motion_ids'] - motion_ids).abs().sum() + (self.ref_motion_cache['motion_times'] - motion_times).abs().sum() + (self.ref_motion_cache['offset'] - offset).abs().sum() > 0 :
-            # import ipdb; ipdb.set_trace()
-            self.ref_motion_cache['motion_ids'] = motion_ids.clone()  # need to clone; otherwise will be overriden
-            self.ref_motion_cache['motion_times'] = motion_times.clone()  # need to clone; otherwise will be overriden
-            self.ref_motion_cache['offset'] = offset.clone() if not offset is None else None
-        else:
-            return self.ref_motion_cache
-        motion_res = self._motion_lib.get_motion_state(motion_ids, motion_times, offset=offset)
-        # import ipdb; ipdb.set_trace()
-        self.ref_motion_cache.update(motion_res)
-
-        return self.ref_motion_cache
-    
-    def _get_state_from_motionlib_cache_trimesh(self, motion_ids, motion_times, offset=None):
-        ## Cache the motion + offset
-        # import ipdb; ipdb.set_trace()
-        if offset is None  or not "motion_ids" in self.ref_motion_cache or self.ref_motion_cache['offset'] is None or len(self.ref_motion_cache['motion_ids']) != len(motion_ids) or len(self.ref_motion_cache['offset']) != len(offset) \
-            or  (self.ref_motion_cache['motion_ids'] - motion_ids).abs().sum() + (self.ref_motion_cache['motion_times'] - motion_times).abs().sum() + (self.ref_motion_cache['offset'] - offset).abs().sum() > 0 :
-            self.ref_motion_cache['motion_ids'] = motion_ids.clone()  # need to clone; otherwise will be overriden
-            self.ref_motion_cache['motion_times'] = motion_times.clone()  # need to clone; otherwise will be overriden
-            self.ref_motion_cache['offset'] = offset.clone() if not offset is None else None
-        else:
-            return self.ref_motion_cache
-        motion_res = self._motion_lib.get_motion_state(motion_ids, motion_times, offset=offset)
-
-        # import ipdb; ipdb.set_trace()
-        # self.root_states[:,:2] = motion_res['root_pos'][:, :2]
-        if self.cfg.terrain.measure_heights:
-            self.measured_heights = self._get_heights(position=motion_res['root_pos'][:, :3]).flatten()
-            delta_height = self.measured_heights[:] - offset[:, 2]
-            # self.root_states[:, 2] += delta_height
-            motion_res['root_pos'][:, 2] += delta_height
-            # import ipdb; ipdb.set_trace()
-            if "rg_pos" in motion_res:
-                motion_res['rg_pos'][:, :, 2] += delta_height.unsqueeze(1)
-            if "rg_pos_t" in motion_res:
-                motion_res['rg_pos_t'][:, :, 2] += delta_height.unsqueeze(1)
-
-        self.ref_motion_cache.update(motion_res)
-
-        return self.ref_motion_cache
     def _push_robots(self):
         """ Random pushes the robots. Emulates an impulse by setting a randomized base velocity. 
         """
@@ -734,6 +648,7 @@ class H1_2_Env:
             # import ipdb; ipdb.set_trace()
             package_loss_random_time = np.random.randint(self.cfg.domain_rand.package_loss_range[0], self.cfg.domain_rand.package_loss_range[1] + 1)
             self._package_loss_counter[:] = package_loss_random_time 
+
 
     def _update_terrain_curriculum(self, env_ids):
         """ Implements the game-inspired curriculum.
@@ -838,6 +753,8 @@ class H1_2_Env:
                                                    torch.randint_like(self.teleop_levels[env_ids], 10), # (the maximum level is nine)
                                                    torch.clip(self.teleop_levels[env_ids], 0)) # (the minumum level is zero)
 
+    
+
     def _get_noise_scale_vec(self, cfg):
         """ Sets a vector used to scale the noise added to the observations.
             [NOTE]: Must be adapted when changing the observations structure
@@ -860,7 +777,221 @@ class H1_2_Env:
             # noise_vec[6+2*self.num_actions    :   6+3*self.num_actions] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
             # noise_vec[6+3*self.num_actions    :   6+4*self.num_actions] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel 
             # noise_vec[6+4*self.num_actions    :                       ] = 0. # previous actions, commands
-            if  self.cfg.motion.teleop_obs_version == 'v-teleop-extend-max-full':
+            if self.cfg.motion.teleop_obs_version == 'v1':
+
+                # SELF_OBSERVATION
+                root_height_obs_end_idx = 1
+                noise_vec[0: root_height_obs_end_idx] = noise_scales.height_measurements * noise_level * self.obs_scales.height_measurements # [0: 1]
+
+                body_pos_end_idx = 1 + self.num_actions*3 # 3x19 -> 57dim
+                noise_vec[0: body_pos_end_idx] = noise_scales.body_pos * noise_level * self.obs_scales.body_pos # [1: 58]
+
+                body_rot_end_idx = body_pos_end_idx + self.num_actions*6 + 6 # 6x20 -> 120dim  
+                noise_vec[body_pos_end_idx: body_rot_end_idx] = noise_scales.body_rot * noise_level * self.obs_scales.body_rot # [58: 178]
+
+                root_lin_vel_end_idx = body_rot_end_idx + 3 # 3dim
+                noise_vec[body_rot_end_idx: root_lin_vel_end_idx] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel # [178:181]
+
+                root_ang_vel_end_idx = root_lin_vel_end_idx + 3 # 3dim
+                noise_vec[root_lin_vel_end_idx: root_ang_vel_end_idx] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel # [181:184]
+
+                dof_pos_end_idx = root_ang_vel_end_idx + self.num_actions # 1x19 -> 19dim
+                noise_vec[root_ang_vel_end_idx: dof_pos_end_idx] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos # [184:203]
+
+                dof_vel_end_idx = dof_pos_end_idx + self.num_actions # 1x19 -> 19dim
+                noise_vec[dof_pos_end_idx: dof_vel_end_idx] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel # [203:222]
+
+                # TAKS OBSERVATION
+                diff_local_body_pos_flat_end_idx = dof_vel_end_idx + self.num_actions*3 + 3 # 3x20 -> 60dim
+                noise_vec[dof_vel_end_idx: diff_local_body_pos_flat_end_idx] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos # [222:282]
+
+                diff_local_body_rot_flat_end_idx = diff_local_body_pos_flat_end_idx + self.num_actions*6 + 6 # 6x20 -> 120dim
+                noise_vec[diff_local_body_pos_flat_end_idx: diff_local_body_rot_flat_end_idx] = noise_scales.ref_body_rot * noise_level * self.obs_scales.body_rot # [282:402]
+
+                diff_local_lin_vel_end_idx = diff_local_body_rot_flat_end_idx + 3 # 3dim
+                noise_vec[diff_local_body_rot_flat_end_idx: diff_local_lin_vel_end_idx] = noise_scales.ref_lin_vel * noise_level * self.obs_scales.lin_vel # [402:405]
+
+                diff_local_ang_vel_end_idx = diff_local_lin_vel_end_idx + 3 # 3dim
+                noise_vec[diff_local_lin_vel_end_idx: diff_local_ang_vel_end_idx] = noise_scales.ref_ang_vel * noise_level * self.obs_scales.ang_vel # [405:408]
+
+                diff_local_ref_body_pos_root_end_idx = diff_local_ang_vel_end_idx + self.num_actions*3 + 3 # 3x20 -> 60dim
+                noise_vec[diff_local_ang_vel_end_idx: diff_local_ref_body_pos_root_end_idx] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos # [408:468]
+
+                diff_local_ref_body_rot_root_end_idx = diff_local_ref_body_pos_root_end_idx + self.num_actions*6 + 6 # 6x20 -> 120dim
+                noise_vec[diff_local_ref_body_pos_root_end_idx: diff_local_ref_body_rot_root_end_idx] = noise_scales.ref_body_rot * noise_level * self.obs_scales.body_rot # [468:588]
+
+                diff_dof_pos_end_idx = diff_local_ref_body_rot_root_end_idx + self.num_actions # 1x19 -> 19dim
+                noise_vec[diff_local_ref_body_rot_root_end_idx: diff_dof_pos_end_idx] = noise_scales.ref_dof_pos * noise_level * self.obs_scales.dof_pos # [588:607]
+
+                diff_dof_vel_end_idx = diff_dof_pos_end_idx + self.num_actions # 1x19 -> 19dim
+                noise_vec[diff_dof_pos_end_idx: diff_dof_vel_end_idx] = noise_scales.ref_dof_vel * noise_level * self.obs_scales.dof_vel # [607:626]
+
+                # PROJECTED GRAVITY
+                projected_gravity_end_idx = diff_dof_vel_end_idx + 3 # 3dim
+                noise_vec[diff_dof_vel_end_idx: projected_gravity_end_idx] = noise_scales.gravity * noise_level # [626:629]
+                #import ipdb; ipdb.set_trace()
+                # LAST ACTION
+                last_action_end_idx = projected_gravity_end_idx + self.num_actions
+                noise_vec[projected_gravity_end_idx: last_action_end_idx] = 0. # [629:648]
+            elif self.cfg.motion.teleop_obs_version == 'v-min':
+                # self.obs_buf = torch.cat([dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading,
+                #             ref_dof_pos, ref_dof_vel, ref_base_vel, ref_base_ang_vel,ref_base_gravity,
+                #             self.actions], dim = -1)
+                # raise NotImplementedError
+                # print(colored("Not Implemented", "red"))
+                # dof_pos
+                noise_vec[0                   : self.num_dof] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # base vel
+                noise_vec[2*self.num_dof      : 2*self.num_dof + 3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+                # base ang vel
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 6  : 2*self.num_dof + 9] = noise_scales.gravity * noise_level
+                # x y heading targets
+                noise_vec[2*self.num_dof + 9  : 2*self.num_dof + 12] = 0.
+                
+                # ref dof pos
+                noise_vec[2*self.num_dof + 12 : 3*self.num_dof + 12] = noise_scales.ref_dof_pos * noise_level * self.obs_scales.dof_pos
+                # ref dof vel
+                noise_vec[3*self.num_dof + 12 : 4*self.num_dof + 12] = noise_scales.ref_dof_vel * noise_level * self.obs_scales.dof_vel
+                # ref base vel
+                noise_vec[4*self.num_dof + 12 : 4*self.num_dof + 15] = noise_scales.ref_lin_vel * noise_level * self.obs_scales.lin_vel
+                # ref base ang vel
+                noise_vec[4*self.num_dof + 15 : 4*self.num_dof + 18] = noise_scales.ref_ang_vel * noise_level * self.obs_scales.ang_vel
+                # ref base gravity
+                noise_vec[4*self.num_dof + 18 : 4*self.num_dof + 21] = noise_scales.ref_gravity * noise_level
+                
+                # self.actions
+                noise_vec[4*self.num_dof + 21 : ] = 0.                
+            elif self.cfg.motion.teleop_obs_version == 'v-min2':
+                # dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading, ref_dof_pos, self.actions   
+                # dof_pos
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # base vel
+                noise_vec[2*self.num_dof      : 2*self.num_dof + 3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+                # base ang vel
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 6  : 2*self.num_dof + 9] = noise_scales.gravity * noise_level
+                # delta base pos dim2
+                noise_vec[2*self.num_dof + 9  : 2*self.num_dof + 11] = noise_scales.delta_base_pos * noise_level * self.obs_scales.delta_base_pos
+                # delta heading dim=1
+                noise_vec[2*self.num_dof + 11 : 2*self.num_dof + 12] = noise_scales.delta_heading * noise_level * self.obs_scales.delta_heading
+                # ref dof pos
+                noise_vec[2*self.num_dof + 12 : 3*self.num_dof + 12] = noise_scales.ref_dof_pos * noise_level * self.obs_scales.dof_pos
+                # last actions
+                noise_vec[3*self.num_dof + 12 : 4*self.num_dof + 12] = noise_scales.last_action * noise_level
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop':
+                # dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading, ref_local_selected_body_pos, self.actions   
+                # dof_pos
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # base vel
+                noise_vec[2*self.num_dof      : 2*self.num_dof + 3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+                # base ang vel
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 6  : 2*self.num_dof + 9] = noise_scales.gravity * noise_level
+                # delta base pos dim2
+                noise_vec[2*self.num_dof + 9  : 2*self.num_dof + 11] = noise_scales.delta_base_pos * noise_level * self.obs_scales.delta_base_pos
+                # delta heading dim=1
+                noise_vec[2*self.num_dof + 11 : 2*self.num_dof + 12] = noise_scales.delta_heading * noise_level * self.obs_scales.delta_heading
+                # ref dof pos
+                noise_vec[2*self.num_dof + 12 : 2*self.num_dof + 12 + len(self.cfg.motion.teleop_selected_keypoints_names)*3] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos
+                # last actions
+                self._rigid_body_pos
+                noise_vec[2*self.num_dof + 12 + len(self.cfg.motion.teleop_selected_keypoints_names)*3 : 3*self.num_dof + 12 + len(self.cfg.motion.teleop_selected_keypoints_names)*3] = noise_scales.last_action * noise_level
+                
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop-clean':
+                # dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading, ref_local_selected_body_pos, self.actions   
+                # dof_pos
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # base vel
+                noise_vec[2*self.num_dof      : 2*self.num_dof + 3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+                # base ang vel
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 6  : 2*self.num_dof + 9] = noise_scales.gravity * noise_level
+                # ref dof pos
+                noise_vec[2*self.num_dof + 9 : 2*self.num_dof + 9 + len(self.cfg.motion.teleop_selected_keypoints_names)*3] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos
+                # last actions
+                noise_vec[2*self.num_dof + 9 + len(self.cfg.motion.teleop_selected_keypoints_names)*3 : 3*self.num_dof + 9 + len(self.cfg.motion.teleop_selected_keypoints_names)*3] = noise_scales.last_action * noise_level
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop-superclean':
+                # dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading, ref_local_selected_body_pos, self.actions   
+                # dof_pos
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # ref dof pos
+                noise_vec[2*self.num_dof : 2*self.num_dof + len(self.cfg.motion.teleop_selected_keypoints_names)*3] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos
+                # last actions
+                noise_vec[2*self.num_dof + len(self.cfg.motion.teleop_selected_keypoints_names)*3 : 3*self.num_dof + len(self.cfg.motion.teleop_selected_keypoints_names)*3] = noise_scales.last_action * noise_level
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop-clean-nolastaction':
+                # dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading, ref_local_selected_body_pos, self.actions   
+                # dof_pos
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # base vel
+                noise_vec[2*self.num_dof      : 2*self.num_dof + 3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+                # base ang vel
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 6  : 2*self.num_dof + 9] = noise_scales.gravity * noise_level
+                # ref dof pos
+                noise_vec[2*self.num_dof + 9 : 2*self.num_dof + 9 + len(self.cfg.motion.teleop_selected_keypoints_names)*3] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos    
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend':
+                # dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading, ref_local_selected_body_pos, self.actions   
+                # dof_pos
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # base vel
+                noise_vec[2*self.num_dof      : 2*self.num_dof + 3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+                # base ang vel
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 6  : 2*self.num_dof + 9] = noise_scales.gravity * noise_level
+                # ref dof pos
+                noise_vec[2*self.num_dof + 9 : 2*self.num_dof + 9 + (len(self.cfg.motion.teleop_selected_keypoints_names) + 2)*3] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos    
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend-nolinvel':
+                
+                # dof_pos, dof_vel, base_vel, base_ang_vel, base_gravity, delta_base_pos, delta_heading, ref_local_selected_body_pos, self.actions   
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # angular velocity
+                noise_vec[2*self.num_dof  : 2*self.num_dof + 3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.gravity * noise_level
+                # ref body pos
+                noise_vec[2*self.num_dof + 6 : 2*self.num_dof + 6 + (len(self.cfg.motion.teleop_selected_keypoints_names)+2)*3] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos    
+                # last actions
+                noise_vec[2*self.num_dof + 6 + (len(self.cfg.motion.teleop_selected_keypoints_names)+2)*3 : ] = noise_scales.last_action * noise_level
+                
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend-max':
+                # local_body_pos.shape, local_body_rot_obs.shape, local_body_vel.shape, local_body_ang_vel.shape, dof_pos.shape, dof_vel.shape
+                # local_body_pos 3x19
+                noise_vec[0                   : self.num_dof      ] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+                # dof vel
+                noise_vec[self.num_dof        : 2*self.num_dof    ] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+                # base vel
+                noise_vec[2*self.num_dof      : 2*self.num_dof + 3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+                # base ang vel
+                noise_vec[2*self.num_dof + 3  : 2*self.num_dof + 6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+                # base gravity
+                noise_vec[2*self.num_dof + 6  : 2*self.num_dof + 9] = noise_scales.gravity * noise_level
+                # ref dof pos
+                noise_vec[2*self.num_dof + 9 : 2*self.num_dof + 9 + (len(self.cfg.motion.teleop_selected_keypoints_names) + 2) *3 * 3] = noise_scales.ref_body_pos * noise_level * self.obs_scales.body_pos  
+
+            elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend-max-full':
                 
                 max_num_bodies = len(self.cfg.motion.teleop_selected_keypoints_names) + 3
                 curr_obs_len = 0
@@ -1082,31 +1213,380 @@ class H1_2_Env:
             self.ref_episodic_offset[env_ids,2] = torch_rand_float(self.cfg.domain_rand.motion_ref_xyz_range[2][0], self.cfg.domain_rand.motion_ref_xyz_range[2][1], (len(env_ids),1), device=self.device).squeeze(1)
             # print(self.ref_episodic_offset[env_ids], " after")
 
+
+    #-------------- Reference Motion ---------------
+    def _load_motion(self):
+        motion_path = self.cfg.motion.motion_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
+        skeleton_path = self.cfg.motion.skeleton_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
+        self._motion_lib = MotionLibH1_2(motion_file=motion_path, device=self.device, masterfoot_conifg=None, fix_height=False,multi_thread=False,mjcf_file=skeleton_path, extend_head=self.cfg.motion.extend_head) #multi_thread=True doesn't work
+        sk_tree = SkeletonTree.from_mjcf(skeleton_path)
+        
+        self.skeleton_trees = [sk_tree] * self.num_envs
+        if self.cfg.env.test:
+            self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=[torch.zeros(25)] * self.num_envs, limb_weights=[np.zeros(10)] * self.num_envs, random_sample=False)
+        else:
+            self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=[torch.zeros(25)] * self.num_envs, limb_weights=[np.zeros(10)] * self.num_envs, random_sample=True)
+        self.motion_dt = self._motion_lib._motion_dt
+
+    def resample_motion(self):
+        self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=[torch.zeros(25)] * self.num_envs, limb_weights=[np.zeros(10)] * self.num_envs, random_sample=True)
+        env_ids = torch.arange(self.num_envs).to(self.device)
+        self.reset_idx(env_ids)
+    def _resample_motion_times(self, env_ids):
+        if len(env_ids) == 0:
+            return
+        # self.motion_ids[env_ids] = self._motion_lib.sample_motions(len(env_ids))
+        # self.motion_ids[env_ids] = torch.randint(0, self._motion_lib._num_unique_motions, (len(env_ids),), device=self.device)
+        # print(self.motion_ids[:10])
+        self.motion_len[env_ids] = self._motion_lib.get_motion_length(self.motion_ids[env_ids])
+        # self.env_origins_init_3Doffset[env_ids, :2] = torch_rand_float(-1., 1., (len(env_ids), 2), device=self.device) # xy position within 1m of the center
+        if self.cfg.env.test:
+            self.motion_start_times[env_ids] = 0
+        else:
+            self.motion_start_times[env_ids] = self._motion_lib.sample_time(self.motion_ids[env_ids])
+        # self.motion_start_times[env_ids] = self._motion_lib.sample_time(self.motion_ids[env_ids])
+        offset=(self.env_origins + self.env_origins_init_3Doffset)
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset= offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+        
+        self.ref_base_pos_init[env_ids] = motion_res["root_pos"][env_ids]
+        self.ref_base_rot_init[env_ids] = motion_res["root_rot"][env_ids]
+        self.ref_base_vel_init[env_ids] = motion_res["root_vel"][env_ids]
+        self.ref_base_ang_vel_init[env_ids] = motion_res["root_ang_vel"][env_ids]
+
+        
+    def _get_state_from_motionlib_cache(self, motion_ids, motion_times, offset=None):
+        ## Cache the motion + offset
+        # import ipdb; ipdb.set_trace()
+        if offset is None  or not "motion_ids" in self.ref_motion_cache or self.ref_motion_cache['offset'] is None or len(self.ref_motion_cache['motion_ids']) != len(motion_ids) or len(self.ref_motion_cache['offset']) != len(offset) \
+            or  (self.ref_motion_cache['motion_ids'] - motion_ids).abs().sum() + (self.ref_motion_cache['motion_times'] - motion_times).abs().sum() + (self.ref_motion_cache['offset'] - offset).abs().sum() > 0 :
+            # import ipdb; ipdb.set_trace()
+            self.ref_motion_cache['motion_ids'] = motion_ids.clone()  # need to clone; otherwise will be overriden
+            self.ref_motion_cache['motion_times'] = motion_times.clone()  # need to clone; otherwise will be overriden
+            self.ref_motion_cache['offset'] = offset.clone() if not offset is None else None
+        else:
+            return self.ref_motion_cache
+        motion_res = self._motion_lib.get_motion_state(motion_ids, motion_times, offset=offset)
+        # import ipdb; ipdb.set_trace()
+        self.ref_motion_cache.update(motion_res)
+
+        return self.ref_motion_cache
     
+    def _get_state_from_motionlib_cache_trimesh(self, motion_ids, motion_times, offset=None):
+        ## Cache the motion + offset
+        # import ipdb; ipdb.set_trace()
+        if offset is None  or not "motion_ids" in self.ref_motion_cache or self.ref_motion_cache['offset'] is None or len(self.ref_motion_cache['motion_ids']) != len(motion_ids) or len(self.ref_motion_cache['offset']) != len(offset) \
+            or  (self.ref_motion_cache['motion_ids'] - motion_ids).abs().sum() + (self.ref_motion_cache['motion_times'] - motion_times).abs().sum() + (self.ref_motion_cache['offset'] - offset).abs().sum() > 0 :
+            self.ref_motion_cache['motion_ids'] = motion_ids.clone()  # need to clone; otherwise will be overriden
+            self.ref_motion_cache['motion_times'] = motion_times.clone()  # need to clone; otherwise will be overriden
+            self.ref_motion_cache['offset'] = offset.clone() if not offset is None else None
+        else:
+            return self.ref_motion_cache
+        motion_res = self._motion_lib.get_motion_state(motion_ids, motion_times, offset=offset)
 
+        # import ipdb; ipdb.set_trace()
+        # self.root_states[:,:2] = motion_res['root_pos'][:, :2]
+        if self.cfg.terrain.measure_heights:
+            self.measured_heights = self._get_heights(position=motion_res['root_pos'][:, :3]).flatten()
+            delta_height = self.measured_heights[:] - offset[:, 2]
+            # self.root_states[:, 2] += delta_height
+            motion_res['root_pos'][:, 2] += delta_height
+            # import ipdb; ipdb.set_trace()
+            if "rg_pos" in motion_res:
+                motion_res['rg_pos'][:, :, 2] += delta_height.unsqueeze(1)
+            if "rg_pos_t" in motion_res:
+                motion_res['rg_pos_t'][:, :, 2] += delta_height.unsqueeze(1)
+
+        self.ref_motion_cache.update(motion_res)
+
+        return self.ref_motion_cache
+
+    def _load_marker_asset(self):
+        asset_path = self.cfg.motion.marker_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
+        asset_root = os.path.dirname(asset_path)
+        asset_file = os.path.basename(asset_path)
+
+        marker_asset_options = gymapi.AssetOptions()
+        marker_asset_options.angular_damping = 0.0
+        marker_asset_options.linear_damping = 0.0
+        marker_asset_options.max_angular_velocity = 0.0
+        marker_asset_options.density = 0
+        marker_asset_options.fix_base_link = True
+        marker_asset_options.thickness = 0.0
+        marker_asset_options.default_dof_drive_mode = gymapi.DOF_MODE_NONE
+        # set no collision
+        marker_asset_options.disable_gravity = True
+        self._marker_asset = self.gym.load_asset(self.sim, asset_root, asset_file, marker_asset_options)
+        return
+    
     # ------------ reward functions----------------
-    def _reward_tracking_lin_vel(self):
-        # Tracking of linear velocity commands (xy axes)
-        lin_vel_error = torch.sum(torch.square(self.commands[:, :2] - self.base_lin_vel[:, :2]), dim=1)
-        return torch.exp(-lin_vel_error / self.reward_cfg["tracking_sigma"])
+    def _reward_torques(self):
+        # Penalize torques
+        return torch.sum(torch.square(self.torques), dim=1)
 
-    def _reward_tracking_ang_vel(self):
-        # Tracking of angular velocity commands (yaw)
-        ang_vel_error = torch.square(self.commands[:, 2] - self.base_ang_vel[:, 2])
-        return torch.exp(-ang_vel_error / self.reward_cfg["tracking_sigma"])
+    def _reward_torque_limits(self):
+        # penalize torques too close to the limit
+        return torch.sum((torch.abs(self.torques) - self.torque_limits*self.cfg.rewards.soft_torque_limit).clip(min=0.), dim=1)
 
-    def _reward_lin_vel_z(self):
-        # Penalize z axis base linear velocity
-        return torch.square(self.base_lin_vel[:, 2])
+    def _reward_dof_vel(self):
+        # Penalize dof velocities
+        return torch.sum(torch.square(self.dof_vel), dim=1)
+    
+    def _reward_dof_acc(self):
+        # Penalize dof accelerations
+        return torch.sum(torch.square((self.last_dof_vel - self.dof_vel) / self.dt), dim=1)
 
-    def _reward_action_rate(self):
+    def _reward_lower_action_rate(self):
         # Penalize changes in actions
-        return torch.sum(torch.square(self.last_actions - self.actions), dim=1)
+        return torch.sum(torch.square(self.last_actions[:, :12] - self.actions[:, :12]), dim=1)
+    
+    def _reward_upper_action_rate(self):
+        # Penalize changes in actions
+        return torch.sum(torch.square(self.last_actions[:, 12:] - self.actions[:, 12:]), dim=1)
+        
+    def _reward_dof_pos_limits(self):
+        # Penalize dof positions too close to the limit
+        out_of_limits = -(self.dof_pos - self.dof_pos_limits[:, 0]).clip(max=0.) # lower limit
+        out_of_limits += (self.dof_pos - self.dof_pos_limits[:, 1]).clip(min=0.)
+        return torch.sum(out_of_limits, dim=1)
 
-    def _reward_similar_to_default(self):
-        # Penalize joint poses far away from default pose
-        return torch.sum(torch.abs(self.dof_pos - self.default_dof_pos), dim=1)
+    def _reward_dof_vel_limits(self):
+        # Penalize dof velocities too close to the limit
+        # clip to max error = 1 rad/s per joint to avoid huge penalties
+        return torch.sum((torch.abs(self.dof_vel) - self.dof_vel_limits*self.cfg.rewards.soft_dof_vel_limit).clip(min=0., max=1.), dim=1)
 
-    def _reward_base_height(self):
-        # Penalize base height away from target
-        return torch.square(self.base_pos[:, 2] - self.reward_cfg["base_height_target"])
+    def _reward_termination(self):
+        # Terminal reward / penalty
+        return self.reset_buf * ~self.time_out_buf
+
+    def _reward_feet_contact_forces(self):
+        # penalize high contact forces
+        return torch.sum((torch.norm(self.contact_forces[:, self.feet_indices, :], dim=-1) -  self.cfg.rewards.max_contact_force).clip(min=0.), dim=1)
+
+    def _reward_stumble(self):
+        # Penalize feet hitting vertical surfaces
+        return torch.any(torch.norm(self.contact_forces[:, self.feet_indices, :2], dim=2) >\
+             5 *torch.abs(self.contact_forces[:, self.feet_indices, 2]), dim=1)
+  
+    def _reward_feet_air_time_teleop(self):
+        # Reward long steps
+        # Need to filter the contacts because the contact reporting of PhysX is unreliable on meshes
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+
+        ref_body_vel = motion_res['body_vel']
+        
+        
+        contact = self.contact_forces[:, self.feet_indices, 2] > 1.
+        contact_filt = torch.logical_or(contact, self.last_contacts) 
+        self.last_contacts = contact
+        first_contact = (self.feet_air_time > 0.) * contact_filt
+        self.feet_air_time += self.dt
+        rew_airTime = torch.sum((self.feet_air_time - 0.25) * first_contact, dim=1) # reward only on first contact with the ground
+        rew_airTime *= torch.norm(ref_body_vel[:, 0, :2], dim=1) > 0.1 #no reward for low ref motion velocity (root xy velocity)
+        self.feet_air_time *= ~contact_filt
+        return rew_airTime
+    
+    def _reward_slippage(self):
+        assert self._rigid_body_vel.shape[1] == 28
+        foot_vel = self._rigid_body_vel[:, self.feet_indices]
+        return torch.sum(torch.norm(foot_vel, dim=-1) * (torch.norm(self.contact_forces[:, self.feet_indices, :], dim=-1) > 1.), dim=1)
+
+    def _reward_feet_ori(self):
+        left_quat = self._rigid_body_rot[:, self.feet_indices[0]]
+        left_gravity = quat_rotate_inverse(left_quat, self.gravity_vec)
+        right_quat = self._rigid_body_rot[:, self.feet_indices[1]]
+        right_gravity = quat_rotate_inverse(right_quat, self.gravity_vec)
+        return torch.sum(torch.square(left_gravity[:, :2]), dim=1)**0.5 + torch.sum(torch.square(right_gravity[:, :2]), dim=1)**0.5 
+
+    def _reward_in_the_air(self):
+        contact = self.contact_forces[:, self.feet_indices, 2] > 1.
+        contact_filt = torch.logical_or(contact, self.last_contacts) 
+        first_foot_contact = contact_filt[:,0]
+        second_foot_contact = contact_filt[:,1]
+        reward = ~(first_foot_contact | second_foot_contact)
+        # import ipdb; ipdb.set_trace()
+        return reward
+    
+    def _reward_orientation(self):
+        # Penalize non flat base orientation
+        return torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1)
+    
+    def _reward_feet_max_height_for_this_air(self):
+        # Reward long steps
+        # Need to filter the contacts because the contact reporting of PhysX is unreliable on meshes
+        contact = self.contact_forces[:, self.feet_indices, 2] > 1.
+        contact_filt = torch.logical_or(contact, self.last_contacts) 
+        from_air_to_contact = torch.logical_and(contact_filt, ~self.last_contacts_filt)
+        self.last_contacts = contact
+        self.last_contacts_filt = contact_filt
+
+        self.feet_air_max_height = torch.max(self.feet_air_max_height, self._rigid_body_pos[:, self.feet_indices, 2])
+        
+        rew_feet_max_height = torch.sum((torch.clamp_min(self.cfg.rewards.desired_feet_max_height_for_this_air - self.feet_air_max_height, 0)) * from_air_to_contact, dim=1) # reward only on first contact with the ground
+        self.feet_air_max_height *= ~contact_filt
+        return rew_feet_max_height
+     
+    def _reward_teleop_selected_joint_position(self):
+        dof_pos = self.dof_pos
+        
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+        ref_dof_pos = motion_res['dof_pos']
+        
+        diff_dof_pos = ref_dof_pos - dof_pos
+        # scale the diff by self.cfg.rewards.teleop_joint_pos_selection
+        for joint_name, scale in self.cfg.rewards.teleop_joint_pos_selection.items():
+            joint_index = self.dof_names.index(joint_name)
+            assert joint_index >= 0, f"Joint {joint_name} not found in the robot"
+            
+            diff_dof_pos[:, joint_index] *= scale **.5
+        diff_dof_pos_dist = torch.mean(torch.square(diff_dof_pos), dim=1)
+        r_dof_pos = torch.exp(-diff_dof_pos_dist / self.cfg.rewards.teleop_joint_pos_sigma)
+        return r_dof_pos
+
+    def _reward_teleop_selected_joint_vel(self):
+        dof_vel = self.dof_vel
+        
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+        ref_dof_vel = motion_res['dof_vel']
+        
+        diff_dof_vel = ref_dof_vel - dof_vel
+        # scale the diff by self.cfg.rewards.teleop_joint_pos_selection
+        for joint_name, scale in self.cfg.rewards.teleop_joint_pos_selection.items():
+            joint_index = self.dof_names.index(joint_name)
+            assert joint_index >= 0, f"Joint {joint_name} not found in the robot"
+            diff_dof_vel[:, joint_index] *= scale **.5
+        diff_dof_vel_dist = torch.mean(torch.square(diff_dof_vel), dim=1)
+        r_dof_vel = torch.exp(-diff_dof_vel_dist / self.cfg.rewards.teleop_joint_vel_sigma)
+        # import ipdb; ipdb.set_trace()
+        return r_dof_vel      
+
+    def _reward_teleop_body_position(self):
+        body_pos = self._rigid_body_pos
+        
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+        ref_body_pos = motion_res['rg_pos']
+        # body_pos[:, :, :2] -= self.base_pos_init[:, :2].unsqueeze(1)
+        # ref_body_pos[:, :, :2] -= self.ref_base_pos_init[:, :2].unsqueeze(1)
+        diff_global_body_pos = ref_body_pos - body_pos
+        diff_body_pos_dist = (diff_global_body_pos**2).mean(dim=-1).mean(dim=-1)
+        r_body_pos = torch.exp(-diff_body_pos_dist / self.cfg.rewards.teleop_body_pos_sigma)
+        return r_body_pos
+    
+    def _reward_teleop_body_position_extend(self):
+        body_pos = self._rigid_body_pos
+        body_rot = self._rigid_body_rot
+        
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+        ref_body_pos_extend = motion_res['rg_pos_t']
+        
+        if self.cfg.asset.local_upper_reward:
+            diff =  ref_body_pos_extend[:, [0]] - body_pos[:, [0]]
+            ref_body_pos_extend[:, 13:] -= diff
+        
+        extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
+        body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
+        
+        diff_global_body_pos = ref_body_pos_extend - body_pos_extend
+        diff_global_body_pos_lower = diff_global_body_pos[:, :13]
+        diff_global_body_pos_upper = diff_global_body_pos[:, 13:]
+        diff_body_pos_dist_lower = (diff_global_body_pos_lower**2).mean(dim=-1).mean(dim=-1)
+        diff_body_pos_dist_upper = (diff_global_body_pos_upper**2).mean(dim=-1).mean(dim=-1)
+        
+        diff_body_pos_dist_lower = diff_body_pos_dist_lower
+        diff_body_pos_dist_upper = diff_body_pos_dist_upper
+        r_body_pos_lower = torch.exp(-diff_body_pos_dist_lower / self.cfg.rewards.teleop_body_pos_lowerbody_sigma)
+        r_body_pos_upper = torch.exp(-diff_body_pos_dist_upper / self.cfg.rewards.teleop_body_pos_upperbody_sigma)
+        
+        r_body_pos = r_body_pos_lower * self.cfg.rewards.teleop_body_pos_lowerbody_weight + r_body_pos_upper * self.cfg.rewards.teleop_body_pos_upperbody_weight
+        
+        return r_body_pos
+    
+    def _reward_teleop_body_position_vr_3keypoints(self):
+
+        body_pos = self._rigid_body_pos
+        body_rot = self._rigid_body_rot
+        
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+        ref_body_pos_extend = motion_res['rg_pos_t']
+        
+
+        extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
+        body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
+        
+        diff_global_body_pos = ref_body_pos_extend - body_pos_extend
+        diff_global_body_pos_vr_3keypoints = diff_global_body_pos[:, -3:]
+        diff_body_pos_dist_vr_3keypoints = (diff_global_body_pos_vr_3keypoints**2).mean(dim=-1).mean(dim=-1)
+
+        diff_body_pos_dist_vr_3keypoints= diff_body_pos_dist_vr_3keypoints
+
+        r_body_pos_vr_3keypoints = torch.exp(-diff_body_pos_dist_vr_3keypoints / self.cfg.rewards.teleop_body_pos_vr_3keypoints_sigma)
+        
+    
+        
+        return r_body_pos_vr_3keypoints
+    
+    def _reward_teleop_body_rotation(self): # wholebody 
+        body_rot = self._rigid_body_rot
+
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+        ref_body_rot = motion_res['rb_rot']
+
+        diff_global_body_rot = torch_utils.quat_mul(ref_body_rot, torch_utils.quat_conjugate(body_rot))
+        diff_global_body_angle = torch_utils.quat_to_angle_axis(diff_global_body_rot)[0]
+        diff_global_body_angle_dist = (diff_global_body_angle**2).mean(dim=-1)
+        r_body_rot = torch.exp(-diff_global_body_angle_dist / self.cfg.rewards.teleop_body_rot_sigma)
+        return r_body_rot
+    
+    def _reward_teleop_body_vel(self):
+        body_vel = self._rigid_body_vel
+
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+
+        ref_body_vel = motion_res['body_vel']
+
+        diff_global_vel = ref_body_vel - body_vel
+        diff_global_vel_dist = (diff_global_vel**2).mean(dim=-1).mean(dim=-1)
+        
+        r_vel = torch.exp(-diff_global_vel_dist / self.cfg.rewards.teleop_body_vel_sigma)
+        return r_vel
+
+    def _reward_teleop_body_ang_vel(self):
+        body_ang_vel = self._rigid_body_ang_vel
+
+        offset = self.env_origins + self.env_origins_init_3Doffset
+        motion_times = (self.episode_length_buf ) * self.dt + self.motion_start_times # next frames so +1
+        # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
+        motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
+
+        ref_body_ang_vel = motion_res['body_ang_vel']
+
+        diff_global_ang_vel = ref_body_ang_vel - body_ang_vel
+        diff_global_ang_vel_dist = (diff_global_ang_vel**2).mean(dim=-1).mean(dim=-1)
+        r_ang_vel = torch.exp(-diff_global_ang_vel_dist / self.cfg.rewards.teleop_body_ang_vel_sigma)
+        return r_ang_vel
+    

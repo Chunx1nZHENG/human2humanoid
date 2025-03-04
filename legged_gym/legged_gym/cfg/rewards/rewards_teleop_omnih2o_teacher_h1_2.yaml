@@ -81,7 +81,7 @@ scales:
   teleop_body_position_extend :  30 # wholebody
   teleop_body_position_extend_small_sigma : 0.0 # wholebody
   teleop_body_position_extend_upper: 0
-  teleop_body_position_vr_3keypoints : 50 # 8 keypoint
+  teleop_body_position_vr_3keypoints : 50 # all keypoint
   teleop_body_rotation : 20.0
   teleop_body_vel : 8.0
   teleop_body_ang_vel : 8.0
