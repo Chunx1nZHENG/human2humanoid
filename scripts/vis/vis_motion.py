@@ -237,7 +237,7 @@ while not gym.query_viewer_has_closed(viewer):
         
     gym.clear_lines(viewer)
     gym.refresh_rigid_body_state_tensor(sim)
-    import pdb; pdb.set_trace()
+    import ipdb; ipdb.set_trace()
     idx = 0
     for pos_joint in rb_pos[0, :]: # idx 0 torso (duplicate with 11)
         sphere_geom2 = gymutil.WireframeSphereGeometry(0.1, 4, 4, None, color=(1, 0.0, 0.0))

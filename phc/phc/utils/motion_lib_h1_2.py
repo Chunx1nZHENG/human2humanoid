@@ -349,6 +349,7 @@ class MotionLibH1_2(MotionLibBase):
         num_motions = self.num_motions()
         total_len = self.get_total_length()
         print(f"Loaded {num_motions:d} motions with a total length of {total_len:.3f}s and {self.gts.shape[0]} frames.")
+        # import ipdb; ipdb.set_trace()
         return motions
 
     def get_motion_state(self, motion_ids, motion_times, offset=None):
@@ -453,7 +454,9 @@ class MotionLibH1_2(MotionLibBase):
             rb_rot[:, self.track_idx] = q_rb_rot
             body_vel[:, self.track_idx] = q_body_vel
             body_ang_vel[:, self.track_idx] = q_ang_vel
-            
+        
+
+        # import ipdb; ipdb.set_trace()
         return_dict.update({
             "root_pos": rg_pos[..., 0, :].clone(),
             "root_rot": rb_rot[..., 0, :].clone(),

@@ -75,7 +75,7 @@ class Humanoid_Batch:
             self._offsets = torch.cat((self._offsets, torch.tensor([[[0, 0, head_length]]]).to(device)), dim = 1).to(device)
             self._local_rotation = torch.cat((self._local_rotation, torch.tensor([[[1, 0, 0, 0]]]).to(device)), dim = 1).to(device)
             
-        
+        # import ipdb; ipdb.set_trace()
         self.joints_range = mjcf_data['joints_range'].to(device)
         self._local_rotation_mat = tRot.quaternion_to_matrix(self._local_rotation).float() # w, x, y ,z
         print("in hb!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   ")
@@ -138,7 +138,8 @@ class Humanoid_Batch:
         pose_input = pose.clone()
         B, seq_len = pose.shape[:2]
         pose = pose[..., :len(self._parents), :] # H1 fitted joints might have extra joints
-        if self.extend_hand and self.extend_head and pose.shape[-2] == 22:
+        # import ipdb; ipdb.set_trace()
+        if self.extend_hand and self.extend_head and pose.shape[-2] == 30:
             pose = torch.cat([pose, torch.zeros(B, seq_len, 1, 3).to(device).type(dtype)], dim = -2) # adding hand and head joints
 
         if convert_to_mat:
@@ -151,7 +152,7 @@ class Humanoid_Batch:
         J = pose_mat.shape[2] - 1  # Exclude root
         
         wbody_pos, wbody_mat = self.forward_kinematics_batch(pose_mat[:, :, 1:], pose_mat[:, :, 0:1], trans)
-        
+        # import ipdb; ipdb.set_trace()
         return_dict = EasyDict()
         
         
@@ -190,7 +191,7 @@ class Humanoid_Batch:
             dof_vel = ((return_dict.dof_pos[:, 1:] - return_dict.dof_pos[:, :-1] )/dt)
             return_dict.dof_vels = torch.cat([dof_vel, dof_vel[:, -2:-1]], dim = 1)
             return_dict.fps = int(1/dt)
-        
+        # import ipdb; ipdb.set_trace()
         return return_dict
     
 
