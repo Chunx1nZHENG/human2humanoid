@@ -1,7 +1,7 @@
 scales:
   # regularization penalty
-  torques : -0.0001
-  torque_limits : -2.
+  torques : -0  #-0.0001
+  torque_limits : -0.001  #-2
   dof_acc : -0.000011 #-8.4e-6   -4.2e-7 #-3.5e-8
   dof_vel : -0.004 # -0.003
   # action_rate : -0.6 # -0.6  # -0.3 # -0.3 -0.12 -0.01

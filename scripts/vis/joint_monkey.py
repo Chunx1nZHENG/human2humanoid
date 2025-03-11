@@ -38,7 +38,7 @@ asset_root = "./"
  
 asset_descriptors = [
     # AssetDesc("resources/robots/h1/h1.xml", False),
-    AssetDesc("resources/robots/h1/urdf/h1.urdf", False),
+    AssetDesc("resources/robots/h1_2/urdf/h1_2.urdf", False),
 ]
 
  

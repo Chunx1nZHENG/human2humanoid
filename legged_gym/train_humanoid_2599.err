@@ -1,0 +1,24 @@
+Using /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121 as PyTorch extensions root...
+Emitting ninja build file /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121/gymtorch/build.ninja...
+Building extension module gymtorch...
+Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
+Loading extension module gymtorch...
+2025-03-10 15:23:57,553 - INFO - logger - logger initialized
+/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/torch/functional.py:513: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3609.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0%|          | 0/4096 [00:00<?, ?it/s] 60%|██████    | 2472/4096 [00:00<00:00, 24708.30it/s]100%|██████████| 4096/4096 [00:00<00:00, 23963.07it/s]
+wandb: Currently logged in as: anjizcx (songzhicheng66-hkust). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.19.8 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.12.21
+wandb: Run data is saved locally in /mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/logs/h1:teleop/25_03_10_15-25-22_OmniH2O_TEACHER/wandb/run-20250310_152525-qw2j5b3o
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run h1_2:teleop
+wandb: ⭐️ View project at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts
+wandb: 🚀 View run at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts/runs/qw2j5b3o
+srun: got SIGCONT
+slurmstepd: error: *** JOB 2599 ON 3090node3 CANCELLED AT 2025-03-10T15:54:02 ***
+slurmstepd: error: *** STEP 2599.0 ON 3090node3 CANCELLED AT 2025-03-10T15:54:02 ***
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+srun: forcing job termination

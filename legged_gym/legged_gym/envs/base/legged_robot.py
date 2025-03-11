@@ -93,7 +93,7 @@ class LeggedRobot(BaseTask):
                                                         highcut=np.ones(self.num_envs*self.num_actions) * self.cfg.control.action_cutfreq, 
                                                         sampling_rate=1./self.dt, num_joints=self.num_envs * self.num_actions, 
                                                         device=self.device)
-            
+        # import ipdb; ipdb.set_trace()
         if self.cfg.motion.teleop:
             self.extend_body_parent_ids = [20, 27]
             self._track_bodies_id = [self._body_list.index(body_name) for body_name in self.cfg.motion.teleop_selected_keypoints_names]
@@ -182,7 +182,7 @@ class LeggedRobot(BaseTask):
 
                 self.kin_dict['gt_action'] = gt_actions.clone()
 
-
+    # import ipdb; ipdb.set_trace()
         # chunxin test
         # set_all_actions into zero
         # actions = torch.zeros_like(actions)
@@ -238,7 +238,7 @@ class LeggedRobot(BaseTask):
         dof_vel = self.dof_vel[:]
         base_ang_vel = self.base_ang_vel
         base_gravity = self.projected_gravity
-        current_obs_a = torch.cat((dof, dof_vel, base_ang_vel, base_gravity, actions), dim=1)
+        current_obs_a = torch.cat((dof, dof_vel, base_ang_vel, base_gravity, actions), dim=1) #27+27+3+3+27 = 87
         self.trajectories[:, 1 * 87 :] = self.trajectories[:, :-1 * 87].clone()
         self.trajectories[:, 0 * 87 : 1 * 87] = current_obs_a.clone()
 
@@ -675,7 +675,7 @@ class LeggedRobot(BaseTask):
                 diff =  ref_body_pos_extend[:, [0]] - self._rigid_body_pos[:, [0]]
                 ref_body_pos_extend[:, 13:] -= diff
             
-            print (ref_body_pos_extend.shape)
+            # print (ref_body_pos_extend.shape)
             self.marker_coords[:] = ref_body_pos_extend.reshape(B, -1, 3)
             
         if self.cfg.motion.teleop:
@@ -1598,6 +1598,8 @@ class LeggedRobot(BaseTask):
                 obs = torch.cat([ self_obs, 
                                             task_obs,  # 
                                             self.actions], dim = -1) # 342 + 552 + 19 = 913
+                
+
             elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend-max-nolinvel':
                 body_pos = self._rigid_body_pos
                 body_rot = self._rigid_body_rot
@@ -1821,6 +1823,9 @@ class LeggedRobot(BaseTask):
                 obs = torch.cat([ self_obs, 
                                             task_obs,  # 
                                             self.actions], dim = -1) # 342 + 552 + 19 = 913
+                # print(f"obs.shape: {obs.shape}")
+                # print(f"self_obs.shape: {self_obs.shape}")
+                # print(f"task_obs.shape: {task_obs.shape}")
 
             else:
                 raise NotImplementedError
@@ -2200,6 +2205,7 @@ class LeggedRobot(BaseTask):
         """
         #pd controller
         actions_scaled = actions * self.cfg.control.action_scale
+        # print (f"actions_scaled: {actions_scaled}")
         
         control_type = self.cfg.control.control_type
         if control_type=="P":
@@ -2212,6 +2218,16 @@ class LeggedRobot(BaseTask):
             raise NameError(f"Unknown controller type: {control_type}")
         if self.cfg.domain_rand.randomize_torque_rfi:
             torques = torques + (torch.rand_like(torques)*2.-1.) * self.cfg.domain_rand.rfi_lim * self._rfi_lim_scale * self.torque_limits
+        # print the torque with name of joint 
+        # for i in range(len(self.dof_names)):
+        #     print(f"torque of {self.dof_names[i]}: {actions_scaled[0][i],self.dof_pos[0][i],self.dof_vel[0][i]}")
+        # first 12 dof is leg, 13-26 is arm
+        #let hip pitch be 0
+        # torques[:,0]=0
+        # torques[:,1]=0
+        # # torques[:,6]=0
+        # torques[:,7]=0
+        # print (actions_scaled[0,3],self.dof_pos[0,3],self.dof_vel[0,3],self.default_dof_pos[0,3], self.p_gains[3], self.d_gains[3], torques[0,3])
         return torch.clip(torques, -self.torque_limits, self.torque_limits)
 
     def _reset_dofs(self, env_ids):
@@ -2254,9 +2270,9 @@ class LeggedRobot(BaseTask):
             env_ids_int32 *= (self.cfg.motion.num_markers+1)
                 
         # print("before reset dof"); import pdb; pdb.set_trace()
-        # self.gym.set_dof_state_tensor_indexed(self.sim,
-        #                                       gymtorch.unwrap_tensor(self.dof_state),
-        #                                       gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
+        self.gym.set_dof_state_tensor_indexed(self.sim,
+                                              gymtorch.unwrap_tensor(self.dof_state),
+                                              gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
         
         
         # print("after reset dof"); import pdb; pdb.set_trace()
@@ -2283,7 +2299,7 @@ class LeggedRobot(BaseTask):
                 # print("root",motion_res['root_pos'][env_ids])
                 # self.root_states[env_ids, 2] += 0.03 # in case under the terrain
                 # torch.where(self.root_states[env_ids, 2] < 1.02, 1.05, self.root_states[env_ids, 2])
-                self.root_states[env_ids, 2] += 0.07# in case under the terrain
+                self.root_states[env_ids, 2] += 0.06# in case under the terrain
 
                 # self.root_states[env_ids, 0] += 5.0 # in case under the terrain
                 # self.root_states[env_ids, 1] += 5.0 # in case under the terrain
@@ -2328,10 +2344,11 @@ class LeggedRobot(BaseTask):
                 # self.root_states[env_ids, 2] += delta_height
                 # motion_res['root_pos'][env_ids,2] += delta_height
                 # self._rigid_body_pos[env_ids] = torch.zeros_like(self._rigid_body_pos[env_ids])
-                # self._rigid_body_pos[env_ids] = motion_res['rg_pos'][env_ids]
-                # self._rigid_body_rot[env_ids] = motion_res['rb_rot'][env_ids]
-                # self._rigid_body_vel[env_ids] =   motion_res['body_vel'][env_ids]
-                # self._rigid_body_ang_vel[env_ids] = motion_res['body_ang_vel'][env_ids]
+
+                self._rigid_body_pos[env_ids] = motion_res['rg_pos'][env_ids]
+                self._rigid_body_rot[env_ids] = motion_res['rb_rot'][env_ids]
+                self._rigid_body_vel[env_ids] =   motion_res['body_vel'][env_ids]
+                self._rigid_body_ang_vel[env_ids] = motion_res['body_ang_vel'][env_ids]
                 # import ipdb; ipdb.set_trace()
             else:
                 self.root_states[env_ids] = self.base_init_state
@@ -3416,6 +3433,7 @@ class LeggedRobot(BaseTask):
             return self.ref_motion_cache
         motion_res = self._motion_lib.get_motion_state(motion_ids, motion_times, offset=offset)
 
+
         # import ipdb; ipdb.set_trace()
         # self.root_states[:,:2] = motion_res['root_pos'][:, :2]
         if self.cfg.terrain.measure_heights:
@@ -3732,6 +3750,9 @@ class LeggedRobot(BaseTask):
         # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
         motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
         ref_dof_pos = motion_res['dof_pos']
+        # print("all dof pos", ref_dof_pos, dof_pos)
+        # print("ref_dof_pos_knee_L", ref_dof_pos[:,3], dof_pos[:,3])
+        # print("ref_dof_pos_knee_R", ref_dof_pos[:,9], dof_pos[:,9])
         
         diff_dof_pos = ref_dof_pos - dof_pos
         # scale the diff by self.cfg.rewards.teleop_joint_pos_selection

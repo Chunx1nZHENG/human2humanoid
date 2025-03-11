@@ -134,6 +134,7 @@ def play(cfg_hydra: DictConfig) -> None:
 
 
     obs = env.get_observations()
+    print(f"this is obs shape",obs.shape)
     
     if env_cfg.motion.realtime_vr_keypoints:
         init_root_pos = env._rigid_body_pos[..., 0, :].clone()

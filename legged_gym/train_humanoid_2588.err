@@ -1,0 +1,5 @@
+/var/lib/slurm/slurmd/job02588/slurm_script: line 15: /mnt/slurmfs-4090node1/homes/czheg739/miniforge3/bin/activate: No such file or directory
+[Error] [carb] Failed to acquire interface: [carb::dictionary::IDictionary v0.4], by client: carb.gym.python.gym_38 (plugin name: (null))
+[Error] [carb.gym.python.gym_38] Couldn't acquire IDictionary interface on startup to collect the settings.
+[Error] [carb] Failed to acquire interface: [carb::settings::ISettings v0.4], by client: carb.gym.python.gym_38 (plugin name: (null))
+srun: error: 4090node2: task 0: Segmentation fault (core dumped)

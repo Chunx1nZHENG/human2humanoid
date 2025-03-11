@@ -1,0 +1,44 @@
+Using /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121 as PyTorch extensions root...
+Emitting ninja build file /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121/gymtorch/build.ninja...
+Building extension module gymtorch...
+Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
+Loading extension module gymtorch...
+2025-03-10 19:54:35,067 - INFO - logger - logger initialized
+/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/torch/functional.py:513: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3609.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0%|          | 0/4096 [00:00<?, ?it/s] 67%|██████▋   | 2745/4096 [00:00<00:00, 27438.32it/s]100%|██████████| 4096/4096 [00:00<00:00, 27838.87it/s]
+wandb: Currently logged in as: anjizcx (songzhicheng66-hkust). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.19.8 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.12.21
+wandb: Run data is saved locally in /mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/logs/h1:teleop/25_03_10_19-55-49_OmniH2O_TEACHER/wandb/run-20250310_195552-i7yscq9j
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run h1_2:teleop
+wandb: ⭐️ View project at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts
+wandb: 🚀 View run at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts/runs/i7yscq9j
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 67% 2751/4096 [00:00<00:00, 27502.94it/s]100% 4096/4096 [00:00<00:00, 27819.76it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 29% 1179/4096 [00:00<00:00, 11779.90it/s] 60% 2447/4096 [00:00<00:00, 12307.55it/s] 91% 3737/4096 [00:00<00:00, 12574.74it/s]100% 4096/4096 [00:00<00:00, 12381.60it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 26% 1062/4096 [00:00<00:00, 10609.21it/s] 53% 2160/4096 [00:00<00:00, 10824.70it/s] 80% 3262/4096 [00:00<00:00, 10912.63it/s]100% 4096/4096 [00:00<00:00, 11964.61it/s]wandb: ERROR Error while calling W&B API: context deadline exceeded (<Response [500]>)
+
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 26% 1049/4096 [00:00<00:00, 10481.39it/s] 53% 2166/4096 [00:00<00:00, 10884.55it/s] 80% 3257/4096 [00:00<00:00, 10894.31it/s]100% 4096/4096 [00:00<00:00, 10912.99it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 26% 1066/4096 [00:00<00:00, 10649.55it/s] 53% 2164/4096 [00:00<00:00, 10842.60it/s] 80% 3276/4096 [00:00<00:00, 10967.48it/s]100% 4096/4096 [00:00<00:00, 10974.48it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 27% 1096/4096 [00:00<00:00, 10953.01it/s] 54% 2192/4096 [00:00<00:00, 10917.31it/s] 80% 3289/4096 [00:00<00:00, 10940.91it/s]100% 4096/4096 [00:00<00:00, 11022.88it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 26% 1068/4096 [00:00<00:00, 10674.11it/s] 53% 2169/4096 [00:00<00:00, 10865.69it/s] 80% 3272/4096 [00:00<00:00, 10938.74it/s]100% 4096/4096 [00:00<00:00, 10933.98it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 26% 1083/4096 [00:00<00:00, 10828.00it/s] 53% 2190/4096 [00:00<00:00, 10964.17it/s] 81% 3301/4096 [00:00<00:00, 11028.58it/s]100% 4096/4096 [00:00<00:00, 11002.18it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 27% 1092/4096 [00:00<00:00, 10908.51it/s] 53% 2191/4096 [00:00<00:00, 10950.34it/s] 80% 3287/4096 [00:00<00:00, 10875.59it/s]100% 4096/4096 [00:00<00:00, 11008.89it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+srun: got SIGCONT
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 2606 ON 3090node2 CANCELLED AT 2025-03-11T16:07:40 ***
+srun: forcing job termination
+  0% 0/4096 [00:00<?, ?it/s] 26% 1076/4096 [00:00<00:00, 10751.99it/s] 53% 2191/4096 [00:00<00:00, 10983.54it/s] 80% 3295/4096 [00:00<00:00, 11005.93it/s]100% 4096/4096 [00:00<00:00, 10919.08it/s]slurmstepd: error: *** STEP 2606.0 ON 3090node2 CANCELLED AT 2025-03-11T16:07:40 ***

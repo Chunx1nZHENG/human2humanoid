@@ -53,7 +53,7 @@ asset_descriptors = [
 sk_tree = SkeletonTree.from_mjcf(h1_xml)
 
 # motion_file = "/mnt/data/user_data/czheng739/database/amass_test.pkl"
-motion_file = "data/h1_2/head_test.pkl"
+motion_file = "data/h1_2/test.pkl"
 if os.path.exists(motion_file):
     print(f"loading {motion_file}")
 else:
@@ -238,7 +238,7 @@ while not gym.query_viewer_has_closed(viewer):
     # import ipdb; ipdb.set_trace()
     gym.clear_lines(viewer)
     gym.refresh_rigid_body_state_tensor(sim)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     idx = 0
 
     for pos_joint in rb_pos[0, :]: # idx 0 torso (duplicate with 11)

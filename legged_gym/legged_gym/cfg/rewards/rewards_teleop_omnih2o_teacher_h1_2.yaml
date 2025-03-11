@@ -1,27 +1,31 @@
 scales:
   # regularization penalty
   torques : -0.0001
-  torque_limits : -2.
+  torque_limits : -5.
   dof_acc : -0.000011 #-8.4e-6   -4.2e-7 #-3.5e-8
-  dof_vel : -0.004 # -0.003
+  dof_vel : -0.001 # -0.003
   # action_rate : -0.6 # -0.6  # -0.3 # -0.3 -0.12 -0.01
-  lower_action_rate : -3.0 # -1.35 # -0.6  # -0.3 # -0.3 -0.12 -0.01
+  lower_action_rate : -0.01 # -1.35 # -0.6  # -0.3 # -0.3 -0.12 -0.01
   upper_action_rate : -0.625 # 0.0625 # -0.6  # -0.3 # -0.3 -0.12 -0.01
-  dof_pos_limits : -100.0*1.25
-  dof_vel_limits : -50.
-  termination : -600*1.25
-  feet_contact_forces : -0.75 # 0.125
+  dof_pos_limits : -30.0*1.25
+  dof_vel_limits : -30.
+  termination : -2000*1.25
+  feet_contact_forces : -0.1 # 0.125
   stumble : -1000.0*1.25
   feet_air_time_teleop : 1000
-  slippage : -30.0*1.25
-  feet_ori : -50.0*1.25
-  in_the_air: -200 # -150 # < -1
+  slippage : -10.0*1.25
+  feet_ori : -20.0*1.25
+  in_the_air: -50 # -150 # < -1
   stable_lower_when_vrclose: 0 #-500.0
   stable_lower_when_vrclose_positive: 0 #-500.0
-  orientation : -200.0
+  orientation : -100.0
   feet_height : -0
-  feet_max_height_for_this_air : -2500
-  
+  feet_max_height_for_this_air : -500
+  # stumble : -100.0*1.25
+  # feet_air_time_teleop : 300
+  # slippage : -10.0*1.25
+  # feet_ori : -10.0*1.25
+  # in_the_air: -80 # -200 # < -1
 
 
   # torques : 0
@@ -81,7 +85,7 @@ scales:
   teleop_body_position_extend :  30 # wholebody
   teleop_body_position_extend_small_sigma : 0.0 # wholebody
   teleop_body_position_extend_upper: 0
-  teleop_body_position_vr_3keypoints : 50 # all keypoint
+  teleop_body_position_vr_3keypoints : 30 # all keypoint
   teleop_body_rotation : 20.0
   teleop_body_vel : 8.0
   teleop_body_ang_vel : 8.0
@@ -161,11 +165,13 @@ teleop_joint_pos_selection :
   left_hip_pitch_joint: 2.0
   left_hip_roll_joint: 0.5
   left_hip_yaw_joint: 0.5
+  left_knee_joint: 0.5
   left_ankle_pitch_joint: 0.5
   left_ankle_roll_joint: 0.5
   right_hip_pitch_joint: 2.0
   right_hip_roll_joint: 0.5
   right_hip_yaw_joint: 0.5
+  right_knee_joint: 0.5
   right_ankle_pitch_joint: 0.5
   right_ankle_roll_joint: 0.5
 
