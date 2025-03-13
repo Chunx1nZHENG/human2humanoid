@@ -1,0 +1,6 @@
+Wed Mar 12 19:35:50 2025
+WARNING: mju_openResource: unknown file '/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/resources/robots/h1_2/scene.xml'
+
+Wed Mar 12 19:37:33 2025
+WARNING: mju_openResource: unknown file '/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/legged_gym/deploy/deploy_mujoco/configs/h1_2_12dof.xml'
+

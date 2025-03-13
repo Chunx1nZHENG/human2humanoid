@@ -2,7 +2,7 @@ teleop : True
 visualize : False
 recycle_motion : True
 terrain_level_down_distance : 0.5
-num_markers : 19
+num_markers : 27
 # motion_file = '{LEGGED_GYM_ROOT_DIR}/resources/motions/h1/walking_gesture.pkl'
 # motion_file = '{LEGGED_GYM_ROOT_DIR}/resources/motions/h1/standing_one_gesture.pkl'
 # motion_file = '{LEGGED_GYM_ROOT_DIR}/resources/motions/h1/standing.pkl'\

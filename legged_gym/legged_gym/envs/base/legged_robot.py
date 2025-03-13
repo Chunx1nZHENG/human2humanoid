@@ -103,7 +103,7 @@ class LeggedRobot(BaseTask):
                 self.extend_body_parent_ids += [0]
                 self._track_bodies_id += [len(self._body_list)]
                 self._track_bodies_extend_id += [len(self._body_list) + 2]
-                self.extend_body_pos = torch.tensor([[0.3, 0, 0], [0.3, 0, 0], [0, 0, 0.75]]).repeat(self.num_envs, 1, 1).to(self.device)
+                self.extend_body_pos = torch.tensor([[0.05, 0, 0], [0.05, 0, 0], [0, 0, 0.75]]).repeat(self.num_envs, 1, 1).to(self.device)
         self.num_compute_average_epl = self.cfg.rewards.num_compute_average_epl
         self.average_episode_length = 0. # num_compute_average_epl last termination episode length
 
@@ -1342,10 +1342,18 @@ class LeggedRobot(BaseTask):
                 
 
                 
-
+                # print (f"task_obs: {task_obs.shape}")
+                # print (f"dof_pos: {dof_pos.shape}")
+                # print (f"dof_vel: {dof_vel.shape}")
+                # print (f"base_vel: {base_vel.shape}")
+                # print (f"base_ang_vel: {base_ang_vel.shape}")
+                # print (f"base_gravity: {base_gravity.shape}")
+                # print (f"self.actions: {self.actions.shape}")
+                # print (f"history_to_be_append: {history_to_be_append.shape}")
+                # import ipdb; ipdb.set_trace()
                 if self.cfg.env.add_short_history:
                     assert self.cfg.env.short_history_length > 0
-                    history_to_be_append = self.trajectories[:, 0:self.cfg.env.short_history_length*63]
+                    history_to_be_append = self.trajectories[:, 0:self.cfg.env.short_history_length*87]
                     obs = torch.cat([dof_pos, dof_vel, base_ang_vel, base_gravity,  # 19dim + 19dim + 3dim + 3dim 
                                                 task_obs,  # 
                                                 self.actions,
@@ -1447,7 +1455,7 @@ class LeggedRobot(BaseTask):
                         
                 
                 # self_obs = compute_humanoid_observations(body_pos, body_rot, root_vel, root_ang_vel, dof_pos, dof_vel, True, False) # 222
-                # import ipdb; ipdb.set_trace()
+                import ipdb; ipdb.set_trace()
                 if self.cfg.motion.realtime_vr_keypoints:
                     ref_rb_pos_subset = self.realtime_vr_keypoints_pos
                     ref_body_vel_subset = self.realtime_vr_keypoints_vel

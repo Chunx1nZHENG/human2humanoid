@@ -1,9 +1,0 @@
-Using /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121 as PyTorch extensions root...
-Emitting ninja build file /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121/gymtorch/build.ninja...
-Building extension module gymtorch...
-Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
-srun: got SIGCONT
-srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
-slurmstepd: error: *** STEP 2603.0 ON 3090node2 CANCELLED AT 2025-03-10T17:10:19 ***
-slurmstepd: error: *** JOB 2603 ON 3090node2 CANCELLED AT 2025-03-10T17:10:19 ***
-srun: forcing job termination

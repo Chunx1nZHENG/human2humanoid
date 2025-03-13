@@ -1,0 +1,6 @@
+Looking in indexes: https://pypi.mirrors.ustc.edu.cn/simple
+Requirement already satisfied: mujoco in /mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages (2.3.7)
+Requirement already satisfied: absl-py in /mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages (from mujoco) (2.1.0)
+Requirement already satisfied: glfw in /mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages (from mujoco) (2.8.0)
+Requirement already satisfied: numpy in /mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages (from mujoco) (1.23.0)
+Requirement already satisfied: pyopengl in /mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages (from mujoco) (3.1.9)

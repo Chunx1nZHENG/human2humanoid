@@ -242,7 +242,7 @@ def play(cfg_hydra: DictConfig) -> None:
 
 
 if __name__ == '__main__':
-    EXPORT_POLICY = False
+    EXPORT_POLICY = True
     RECORD_FRAMES = False
     MOVE_CAMERA = False
     # args = get_args()
