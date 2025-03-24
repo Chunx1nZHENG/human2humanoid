@@ -1,0 +1,39 @@
+Using /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121 as PyTorch extensions root...
+Emitting ninja build file /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121/gymtorch/build.ninja...
+Building extension module gymtorch...
+Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
+Loading extension module gymtorch...
+2025-03-13 21:46:53,304 - INFO - logger - logger initialized
+/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/torch/functional.py:513: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3609.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0%|          | 0/4096 [00:00<?, ?it/s] 61%|██████    | 2497/4096 [00:00<00:00, 24966.04it/s]100%|██████████| 4096/4096 [00:00<00:00, 24715.50it/s]
+wandb: Currently logged in as: anjizcx (songzhicheng66-hkust). Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.12.21
+wandb: Run data is saved locally in /mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/logs/h1_2:teleop/25_03_13_21-48-10_OmniH2O_TEACHER/wandb/run-20250313_214813-oz3o30ca
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run h1_2:teleop
+wandb: ⭐️ View project at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts
+wandb: 🚀 View run at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts/runs/oz3o30ca
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 60% 2441/4096 [00:00<00:00, 24403.68it/s]100% 4096/4096 [00:00<00:00, 24834.15it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 54% 2215/4096 [00:00<00:00, 22141.89it/s]100% 4096/4096 [00:00<00:00, 23824.07it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 51% 2107/4096 [00:00<00:00, 21058.12it/s]100% 4096/4096 [00:00<00:00, 23177.61it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 56% 2276/4096 [00:00<00:00, 22752.54it/s]100% 4096/4096 [00:00<00:00, 24316.01it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 52% 2131/4096 [00:00<00:00, 21307.58it/s]100% 4096/4096 [00:00<00:00, 23327.06it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 43% 1773/4096 [00:00<00:00, 17726.93it/s]100% 4096/4096 [00:00<00:00, 21811.19it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 25% 1038/4096 [00:00<00:00, 10374.25it/s] 52% 2150/4096 [00:00<00:00, 10806.56it/s] 92% 3758/4096 [00:00<00:00, 13208.96it/s]100% 4096/4096 [00:00<00:00, 13089.23it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 24% 986/4096 [00:00<00:00, 9848.36it/s] 48% 1977/4096 [00:00<00:00, 9880.91it/s] 82% 3343/4096 [00:00<00:00, 11604.82it/s]100% 4096/4096 [00:00<00:00, 12474.18it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+srun: got SIGCONT
+slurmstepd: error: *** JOB 2716 ON 3090node3 CANCELLED AT 2025-03-14T16:18:15 ***
+srun: forcing job termination
+  0% 0/4096 [00:00<?, ?it/s] 24% 992/4096 [00:00<00:00, 9912.33it/s] 49% 1996/4096 [00:00<00:00, 9984.54it/s] 90% 3690/4096 [00:00<00:00, 13158.18it/s]100% 4096/4096 [00:00<00:00, 12973.35it/s]slurmstepd: error: *** STEP 2716.0 ON 3090node3 CANCELLED AT 2025-03-14T16:18:15 ***

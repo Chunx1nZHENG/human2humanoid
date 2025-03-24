@@ -1,0 +1,28 @@
+Using /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121 as PyTorch extensions root...
+Emitting ninja build file /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121/gymtorch/build.ninja...
+Building extension module gymtorch...
+Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
+Loading extension module gymtorch...
+2025-03-18 19:32:42,525 - INFO - logger - logger initialized
+/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/torch/functional.py:513: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3609.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+Error executing job with overrides: ['task=h1_2:teleop', 'run_name=OmniH2O_TEACHER', 'env.num_observations=1233', 'env.num_privileged_obs=1334', 'motion.teleop_obs_version=v-teleop-extend-max-full_h1_2', 'motion=motion_full_h1_2', 'motion.extend_head=True', 'asset.zero_out_far=False', 'asset.termination_scales.max_ref_motion_distance=1.5', 'sim_device=cuda:3', 'motion.motion_file=../../../database/compress.pkl', 'rewards=rewards_teleop_omnih2o_teacher_h1_2', 'rewards.penalty_curriculum=True', 'rewards.penalty_scale=0.5', 'num_envs=4096', 'headless=True']
+Traceback (most recent call last):
+  File "legged_gym/scripts/train_hydra.py", line 34, in train
+    env, env_cfg = task_registry.make_env_hydra(name=cfg_hydra.task, hydra_cfg=cfg_hydra, env_cfg=cfg_hydra)
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/legged_gym/utils/task_registry.py", line 108, in make_env_hydra
+    env = task_class(   cfg=env_cfg,
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/legged_gym/envs/base/legged_robot.py", line 65, in __init__
+    self._init_buffers()
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/legged_gym/envs/base/legged_robot.py", line 3111, in _init_buffers
+    self._load_motion()
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/legged_gym/envs/base/legged_robot.py", line 3377, in _load_motion
+    self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=[torch.zeros(17)] * self.num_envs, limb_weights=[np.zeros(10)] * self.num_envs, random_sample=True)
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/phc/phc/utils/motion_lib_h1_2.py", line 268, in load_motions
+    res_acc.update(self.load_motion_with_skeleton(*jobs[0], None, 0))
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/phc/phc/utils/motion_lib_h1_2.py", line 490, in load_motion_with_skeleton
+    seq_len = curr_file['root_trans_offset'].shape[0]
+KeyError: 'root_trans_offset'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+srun: error: 3090node3: task 0: Exited with exit code 1

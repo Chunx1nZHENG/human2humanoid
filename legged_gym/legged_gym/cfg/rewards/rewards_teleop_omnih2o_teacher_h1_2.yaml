@@ -133,7 +133,7 @@ teleop_body_pos_0dot5sigma : 0.5 # 0.01
 teleop_body_pos_upperbody_sigma : 0.03 # -> 0.03
 teleop_body_pos_vr_3keypoints_sigma : 0.03 # 0.002->0.03
 
-teleop_body_pos_lowerbody_weight : 0.5
+teleop_body_pos_lowerbody_weight : 2.5
 teleop_body_pos_upperbody_weight : 1.0
 teleop_body_rot_sigma : 0.1
 teleop_body_vel_sigma : 10 # 10 -> 5

@@ -1252,6 +1252,7 @@ class LeggedRobot(BaseTask):
                         obs[self.ready_for_train_indices,38:41] = estimate_velocity
 
             elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend-vr-max-nolinvel':
+                # TAG DEBUG HERE
                 body_pos = self._rigid_body_pos
                 body_rot = self._rigid_body_rot
                 body_vel = self._rigid_body_vel

@@ -1,0 +1,30 @@
+2025-03-17 20:22:12,166 - INFO - logger - logger initialized
+Traceback (most recent call last):
+  File "grad_fit_h1_2.py", line 117, in <module>
+    smpl_parser_n = SMPL_Parser(model_path="data/smpl", gender="neutral")
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/phc/phc/smpllib/smpl_parser.py", line 309, in __init__
+    super(SMPL_Parser, self).__init__(*args, **kwargs)
+  File "/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/smplx/body_models.py", line 139, in __init__
+    assert osp.exists(smpl_path), "Path {} does not exist!".format(
+AssertionError: Path data/smpl does not exist!
+srun: error: 3090node3: task 0: Exited with exit code 1
+2025-03-17 20:22:17,274 - INFO - logger - logger initialized
+Traceback (most recent call last):
+  File "grad_fit_h1_2.py", line 117, in <module>
+    smpl_parser_n = SMPL_Parser(model_path="data/smpl", gender="neutral")
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/phc/phc/smpllib/smpl_parser.py", line 309, in __init__
+    super(SMPL_Parser, self).__init__(*args, **kwargs)
+  File "/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/smplx/body_models.py", line 139, in __init__
+    assert osp.exists(smpl_path), "Path {} does not exist!".format(
+AssertionError: Path data/smpl does not exist!
+srun: error: 3090node3: task 0: Exited with exit code 1
+2025-03-17 20:22:20,562 - INFO - logger - logger initialized
+Traceback (most recent call last):
+  File "grad_fit_h1_2.py", line 117, in <module>
+    smpl_parser_n = SMPL_Parser(model_path="data/smpl", gender="neutral")
+  File "/mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/phc/phc/smpllib/smpl_parser.py", line 309, in __init__
+    super(SMPL_Parser, self).__init__(*args, **kwargs)
+  File "/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/smplx/body_models.py", line 139, in __init__
+    assert osp.exists(smpl_path), "Path {} does not exist!".format(
+AssertionError: Path data/smpl does not exist!
+srun: error: 3090node3: task 0: Exited with exit code 1

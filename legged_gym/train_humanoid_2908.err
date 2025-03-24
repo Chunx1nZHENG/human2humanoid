@@ -1,0 +1,45 @@
+Using /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121 as PyTorch extensions root...
+Emitting ninja build file /mnt/slurmfs-4090node1/homes/czheng739/.cache/torch_extensions/py38_cu121/gymtorch/build.ninja...
+Building extension module gymtorch...
+Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
+Loading extension module gymtorch...
+2025-03-18 20:06:37,116 - INFO - logger - logger initialized
+/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/site-packages/torch/functional.py:513: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3609.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0%|          | 0/4096 [00:00<?, ?it/s] 44%|████▍     | 1802/4096 [00:00<00:00, 18010.01it/s] 88%|████████▊ | 3604/4096 [00:00<00:00, 17761.79it/s]100%|██████████| 4096/4096 [00:00<00:00, 17725.93it/s]
+wandb: Currently logged in as: anjizcx (songzhicheng66-hkust). Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.12.21
+wandb: Run data is saved locally in /mnt/slurmfs-4090node1/homes/czheng739/chunxin/human2humanoid/legged_gym/logs/h1_2:teleop/25_03_18_20-08-14_OmniH2O_TEACHER/wandb/run-20250318_200817-y6q98hrk
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run h1_2:teleop
+wandb: ⭐️ View project at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts
+wandb: 🚀 View run at https://wandb.ai/songzhicheng66-hkust/human2humanoid-legged_gym_legged_gym_scripts/runs/y6q98hrk
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 29% 1173/4096 [00:00<00:00, 11724.14it/s] 87% 3566/4096 [00:00<00:00, 18897.66it/s]100% 4096/4096 [00:00<00:00, 18461.42it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 27% 1097/4096 [00:00<00:00, 10968.60it/s] 85% 3492/4096 [00:00<00:00, 18603.41it/s]100% 4096/4096 [00:00<00:00, 18224.30it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 40% 1646/4096 [00:00<00:00, 16455.31it/s] 97% 3985/4096 [00:00<00:00, 20532.98it/s]100% 4096/4096 [00:00<00:00, 19969.00it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 55% 2248/4096 [00:00<00:00, 22470.91it/s]100% 4096/4096 [00:00<00:00, 23113.47it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 56% 2288/4096 [00:00<00:00, 22872.55it/s]100% 4096/4096 [00:00<00:00, 23239.00it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 42% 1738/4096 [00:00<00:00, 17376.83it/s]100% 4096/4096 [00:00<00:00, 20669.23it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 54% 2202/4096 [00:00<00:00, 22014.72it/s]100% 4096/4096 [00:00<00:00, 22773.92it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 48% 1959/4096 [00:00<00:00, 19586.19it/s]100% 4096/4096 [00:00<00:00, 21591.13it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 49% 2006/4096 [00:00<00:00, 20048.02it/s]100% 4096/4096 [00:00<00:00, 21966.11it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 26% 1082/4096 [00:00<00:00, 10818.15it/s] 86% 3504/4096 [00:00<00:00, 18695.31it/s]100% 4096/4096 [00:00<00:00, 18242.30it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 46% 1881/4096 [00:00<00:00, 18803.25it/s]100% 4096/4096 [00:00<00:00, 21514.72it/s]
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+  0% 0/4096 [00:00<?, ?it/s] 48% 1948/4096 [00:00<00:00, 19475.93it/s]100% 4096/4096 [00:00<00:00, 21399.11it/s]
+Exception in thread Thread-12:
+Traceback (most recent call last):
+  File "/mnt/slurmfs-4090node1/homes/czheng739/miniforge3/envs/BC/lib/python3.8/threading.py", line 932, in _bootstrap_inner
+Error executing job with overrides: ['task=h1_2

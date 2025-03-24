@@ -55,9 +55,10 @@ if __name__ == "__main__":
     parser.add_argument("--amass_root", type=str, default="/hdd/zen/data/ActBound/AMASS/AMASS_Complete")
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=1000)
+    parser.add_argument("--device", type=str, default="cuda:0")
     args = parser.parse_args()
     
-    device = torch.device("cuda")
+    device = torch.device(args.device)
 
     h1_2_rotation_axis = torch.tensor([[
         [0, 0, 1], # l_hip_yaw
@@ -204,5 +205,5 @@ if __name__ == "__main__":
         # joblib.dump(data_dump, "data/h1_2/test.pkl")
     
         
-    import ipdb; ipdb.set_trace()
-    joblib.dump(data_dump, "data/h1_2/amass_train.pkl")
+    # import ipdb; ipdb.set_trace()
+    joblib.dump(data_dump, f"/mnt/slurmfs-4090node1/homes/czheng739/database/{start_index}_{end_index}_amass_train.pkl")

@@ -74,7 +74,7 @@ class Motion():
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.num_envs = 1
         self.ref_motion_cache = {}
-        self.extend_body_pos = torch.tensor([[0.05, 0, 0], [0.05, 0, 0], [0, 0, 0.75]]).repeat(self.num_envs, 1, 1).to(self.device ,dtype=torch.float)
+        self.extend_body_pos = torch.tensor([[0.3, 0, 0], [0.3, 0, 0], [0, 0, 0.75]]).repeat(self.num_envs, 1, 1).to(self.device ,dtype=torch.float)
         self.extend_body_parent_ids = torch.tensor([20,27,0]).repeat(self.num_envs, 1).to(self.device)
         self._track_bodies_extend_id = torch.tensor([28,29,30]).repeat(self.num_envs, 1).to(self.device)
         # self.dt = 0.01
@@ -357,6 +357,7 @@ if __name__ == "__main__":
                 action = policy(obs_tensor).detach().numpy().squeeze()
                 # transform action to target_dof_pos
                 target_dof_pos = action * action_scale + default_angles
+                import ipdb; ipdb.set_trace()
                 last_actions = action
                 history_obs[1*87:] = history_obs[:-1*87]
                 action_torch = torch.from_numpy(action).to(motion.device, dtype=torch.float)
